@@ -7,6 +7,13 @@ import StatsPanel from "../components/StatsPanel";
 import ResultsCard from "../components/ResultsCard";
 import "../styles/MultiplayerRace.css";
 
+// Fallback snippet if backend is unavailable
+const FALLBACK_SNIPPET = `@router.get("/random", response_model=SnippetResponse)
+def get_random_snippet(
+    snippet_service: SnippetService = Depends(get_snippet_service)):
+    """Get a random code snippet"""
+    return snippet_service.get_random_snippet()`;
+
 export default function SoloRacePage({ onBack }) {
   const [snippet, setSnippet] = useState("");
   const [lines, setLines] = useState([]);
@@ -41,6 +48,10 @@ export default function SoloRacePage({ onBack }) {
         setLines(text.split('\n'));
       } catch (err) {
         console.error("Error fetching passage:", err);
+        console.log("Using fallback snippet");
+        // Use fallback snippet if backend fails
+        setSnippet(FALLBACK_SNIPPET);
+        setLines(FALLBACK_SNIPPET.split('\n'));
       }
     }
     fetchPassage();
@@ -180,14 +191,14 @@ export default function SoloRacePage({ onBack }) {
 
   if (!snippet) {
     return (
-      <div className="race-loading">
+      <div className="loading-container">
         Loading snippet...
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+    <div className="content-box-large" style={{ margin: '0 auto' }}>
       {!isFinished ? (
         <>
           <div className="race-header">
@@ -232,28 +243,10 @@ export default function SoloRacePage({ onBack }) {
           />
 
           {onBack && (
-            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+            <div className="text-center mt-xl">
               <button
                 onClick={onBack}
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  fontSize: '1rem',
-                  fontWeight: 500,
-                  background: 'transparent',
-                  color: '#b8b8d1',
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-                onMouseOver={(e) => {
-                  e.target.style.borderColor = '#00e0c6';
-                  e.target.style.color = '#00e0c6';
-                }}
-                onMouseOut={(e) => {
-                  e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                  e.target.style.color = '#b8b8d1';
-                }}
+                className="btn btn-outline-secondary"
               >
                 ← Back to Home
               </button>

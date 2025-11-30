@@ -86,189 +86,72 @@ export default function MultiplayerPage({ userId, username, onBack }) {
   if (view === "menu") {
     return (
       <div className="race-container">
-        <div style={{ 
-          maxWidth: '600px', 
-          margin: '0 auto', 
-          textAlign: 'center',
-          paddingTop: '4rem'
-        }}>
-          <h1 className="race-title" style={{ fontSize: '3rem', marginBottom: '2rem' }}>
+        <div className="centered-content">
+          <h1 className="page-title">
             Multiplayer Race
           </h1>
 
           {!userId && (
-            <div style={{
-              background: 'rgba(74, 144, 226, 0.1)',
-              border: '2px solid rgba(74, 144, 226, 0.5)',
-              borderRadius: '8px',
-              padding: '1rem',
-              marginBottom: '2rem',
-              color: '#4a90e2'
-            }}>
+            <div className="message-box message-info">
               Playing as guest - You can join games but cannot create them
             </div>
           )}
 
           {error && (
-            <div style={{
-              background: 'rgba(231, 76, 60, 0.1)',
-              border: '2px solid rgba(231, 76, 60, 0.5)',
-              borderRadius: '8px',
-              padding: '1rem',
-              marginBottom: '2rem',
-              color: '#e74c3c'
-            }}>
+            <div className="message-box message-error">
               {error}
             </div>
           )}
 
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '12px',
-            padding: '2rem',
-            marginBottom: '2rem'
-          }}>
-            <h2 style={{ 
-              fontSize: '1.5rem', 
-              marginBottom: '1.5rem',
-              color: '#00e0c6'
-            }}>
+          <div className="card mb-xl">
+            <h2 className="section-title">
               Create a New Game
             </h2>
             {!userId && (
-              <p style={{
-                color: '#b8b8d1',
-                marginBottom: '1rem',
-                fontSize: '0.9rem'
-              }}>
+              <p className="text-muted mb-md text-small">
                 Login required to create games
               </p>
             )}
             <button
               onClick={handleCreateGame}
               disabled={loading || !userId}
-              style={{
-                width: '100%',
-                padding: '1rem 2rem',
-                fontSize: '1.2rem',
-                fontWeight: 600,
-                background: userId ? 'linear-gradient(135deg, #00e0c6 0%, #00a896 100%)' : '#666',
-                color: userId ? '#0f0c29' : '#999',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: userId ? 'pointer' : 'not-allowed',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                boxShadow: userId ? '0 4px 15px rgba(0, 224, 198, 0.3)' : 'none'
-              }}
-              onMouseOver={(e) => {
-                if (userId && !loading) {
-                  e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow = '0 6px 20px rgba(0, 224, 198, 0.4)';
-                }
-              }}
-              onMouseOut={(e) => {
-                if (userId) {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = '0 4px 15px rgba(0, 224, 198, 0.3)';
-                }
-              }}
+              className="btn btn-primary btn-full btn-large"
             >
               {loading ? 'Creating...' : '🎮 Create Game'}
             </button>
           </div>
 
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '12px',
-            padding: '2rem'
-          }}>
-            <h2 style={{ 
-              fontSize: '1.5rem', 
-              marginBottom: '1.5rem',
-              color: '#00e0c6'
-            }}>
+          <div className="card">
+            <h2 className="section-title">
               Join Existing Game
             </h2>
 
             {!userId && (
-              <input
-                type="text"
-                placeholder="Enter Your Name (Guest)"
-                value={guestName}
-                onChange={(e) => setGuestName(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '1rem',
-                  fontSize: '1rem',
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  color: '#fff',
-                  marginBottom: '1rem',
-                  outline: 'none',
-                  transition: 'border-color 0.2s'
-                }}
-                onFocus={(e) => e.target.style.borderColor = '#00e0c6'}
-                onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)'}
-              />
+              <div className="input-group mb-md">
+                <input
+                  type="text"
+                  placeholder="Enter Your Name (Guest)"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  className="input-field"
+                />
+              </div>
             )}
 
-            <input
-              type="text"
-              placeholder="Enter Room Code"
-              value={roomCodeInput}
-              onChange={(e) => setRoomCodeInput(e.target.value.toUpperCase())}
-              onKeyDown={(e) => e.key === 'Enter' && handleJoinGame()}
-              style={{
-                width: '100%',
-                padding: '1rem',
-                fontSize: '1.2rem',
-                fontFamily: "'Courier New', monospace",
-                textAlign: 'center',
-                letterSpacing: '0.2em',
-                border: '2px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '8px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                color: '#fff',
-                marginBottom: '1rem',
-                outline: 'none',
-                transition: 'border-color 0.2s'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#00e0c6'}
-              onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)'}
-            />
+            <div className="input-group mb-md">
+              <input
+                type="text"
+                placeholder="Enter Room Code"
+                value={roomCodeInput}
+                onChange={(e) => setRoomCodeInput(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === 'Enter' && handleJoinGame()}
+                className="input-field input-field-code"
+              />
+            </div>
             <button
               onClick={handleJoinGame}
               disabled={loading || !roomCodeInput.trim() || (!userId && !guestName.trim())}
-              style={{
-                width: '100%',
-                padding: '1rem 2rem',
-                fontSize: '1.2rem',
-                fontWeight: 600,
-                background: (roomCodeInput.trim() && (userId || guestName.trim())) 
-                  ? 'linear-gradient(135deg, #4a90e2 0%, #357abd 100%)' 
-                  : '#666',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: (roomCodeInput.trim() && (userId || guestName.trim())) ? 'pointer' : 'not-allowed',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                boxShadow: (roomCodeInput.trim() && (userId || guestName.trim())) 
-                  ? '0 4px 15px rgba(74, 144, 226, 0.3)' 
-                  : 'none'
-              }}
-              onMouseOver={(e) => {
-                if (roomCodeInput.trim() && (userId || guestName.trim()) && !loading) {
-                  e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow = '0 6px 20px rgba(74, 144, 226, 0.4)';
-                }
-              }}
-              onMouseOut={(e) => {
-                if (roomCodeInput.trim() && (userId || guestName.trim())) {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = '0 4px 15px rgba(74, 144, 226, 0.3)';
-                }
-              }}
+              className="btn btn-blue btn-full btn-large"
             >
               {loading ? 'Joining...' : '🚀 Join Game'}
             </button>
@@ -276,26 +159,7 @@ export default function MultiplayerPage({ userId, username, onBack }) {
 
           <button
             onClick={onBack}
-            style={{
-              marginTop: '2rem',
-              padding: '0.75rem 1.5rem',
-              fontSize: '1rem',
-              fontWeight: 500,
-              background: 'transparent',
-              color: '#b8b8d1',
-              border: '2px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-            onMouseOver={(e) => {
-              e.target.style.borderColor = '#00e0c6';
-              e.target.style.color = '#00e0c6';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-              e.target.style.color = '#b8b8d1';
-            }}
+            className="btn btn-outline-secondary mt-xl"
           >
             ← Back to Home
           </button>
@@ -333,64 +197,30 @@ export default function MultiplayerPage({ userId, username, onBack }) {
   if (view === "results" && raceResults) {
     return (
       <div className="race-container">
-        <div style={{ 
-          maxWidth: '600px', 
-          margin: '0 auto',
-          paddingTop: '4rem'
-        }}>
-          <h1 style={{ 
-            fontSize: '2.5rem', 
-            marginBottom: '2rem', 
-            color: '#00e0c6',
-            textAlign: 'center'
-          }}>
+        <div className="centered-content">
+          <h1 className="page-title">
             🏆 Race Results
           </h1>
-          <div style={{ 
-            background: 'rgba(255, 255, 255, 0.05)', 
-            padding: '2rem', 
-            borderRadius: '12px',
-            border: '1px solid rgba(255, 255, 255, 0.1)'
-          }}>
+          <div className="card">
             {raceResults.map((result, idx) => (
-              <div key={result.user_id} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '1rem',
-                marginBottom: '1rem',
-                background: idx === 0 
-                  ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)' 
-                  : 'rgba(255, 255, 255, 0.05)',
-                borderRadius: '8px',
-                color: idx === 0 ? '#000' : '#fff'
-              }}>
-                <span style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
+              <div 
+                key={result.user_id} 
+                className={idx === 0 ? "result-item result-winner" : "result-item"}
+              >
+                <span className="result-position">
                   {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${result.position}.`}
                   {' '}{result.username}
                 </span>
-                <span style={{ fontSize: '1rem' }}>
+                <span className="result-stats">
                   {Math.round(result.wpm)} WPM • {Math.round(result.accuracy)}%
                 </span>
               </div>
             ))}
           </div>
-          <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <div className="text-center mt-xl">
             <button 
               onClick={handleBackToMenu}
-              style={{ 
-                padding: '1rem 2rem', 
-                background: '#00e0c6', 
-                color: '#0f0c29',
-                border: 'none', 
-                borderRadius: '8px',
-                fontSize: '1.1rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'transform 0.2s'
-              }}
-              onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
-              onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+              className="btn btn-primary btn-large"
             >
               Back to Multiplayer Menu
             </button>

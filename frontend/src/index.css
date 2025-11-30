@@ -1,3 +1,6 @@
+/* Import universal styles */
+@import './styles/universal.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

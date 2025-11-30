@@ -1,17 +1,11 @@
+/* MultiplayerRace and SoloRace specific styles */
+/* Most common styles have been moved to universal.css */
+
 .race-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
   color: #fff;
   padding: 2rem;
-}
-
-.race-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  font-size: 1.5rem;
-  color: #00e0c6;
 }
 
 .countdown-screen {
@@ -191,7 +185,7 @@
 
 .input-label {
   font-size: 14px;
-  color: #666;
+  color: #b8b8d1;
   margin-bottom: 8px;
   font-weight: 500;
 }
@@ -203,6 +197,8 @@
   font-family: 'Courier New', monospace;
   border: 2px solid #ddd;
   border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
   transition: border-color 0.2s, background-color 0.2s;
 }
 
@@ -214,7 +210,7 @@
 
 .typing-input.input-error {
   border-color: #e74c3c;
-  background-color: rgba(231, 77, 60, 0.857);
+  background-color: rgba(231, 77, 60, 0.1);
 }
 
 .typing-input::placeholder {
@@ -228,7 +224,7 @@
   line-height: 1.6;
   padding: 4px 0;
   white-space: pre;
-  color: #333;
+  color: #ddd;
 }
 
 .line-current {
@@ -281,7 +277,6 @@
 
   .typing-input {
     font-size: 1rem;
-    min-height: 120px;
   }
 
   .countdown-number {

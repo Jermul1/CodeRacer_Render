@@ -66,10 +66,10 @@ export default function HomePage({ onStartSoloRace, onStartMultiplayer, onLogin,
   // Auth Modal View
   if (showAuth) {
     return (
-      <div className="frontpage" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <div className="app-container">
         <Header currentUser={currentUser} onLogout={onLogout} onHome={handleBackToHome} />
 
-        <main className="frontpage-main" style={{ flex: 1 }}>
+        <main className="main-content">
           <div className="auth-container">
             <div className="auth-box">
               <div className="auth-tabs">
@@ -176,16 +176,16 @@ export default function HomePage({ onStartSoloRace, onStartMultiplayer, onLogin,
 
   // Main Home View
   return (
-    <div className="frontpage" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div className="app-container">
       <Header currentUser={currentUser} onLogout={onLogout} onHome={() => {}} />
 
-      <main className="frontpage-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+      <main className="main-content">
+        <div className="text-center mb-xl">
           <LogoAnimation />
-          <p className="tagline" style={{ marginTop: '1rem', fontSize: '1.2rem', color: '#b8b8d1' }}>Type code. Race the clock. Beat your best.</p>
+          <p className="tagline">Type code. Race the clock. Beat your best.</p>
         </div>
 
-        <div className="action-buttons" style={{ width: '100%', maxWidth: '400px' }}>
+        <div className="action-buttons w-full max-w-sm">
           <button 
             className="btn btn-primary btn-full"
             onClick={onStartSoloRace}
