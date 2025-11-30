@@ -1,0 +1,17 @@
+/* Coolors Exported Palette - https://coolors.co/02010a-006c67-d1d1d1-dbdbdb-85c7f2 */
+.colors-palette-hex {
+/* CSS HEX */
+--black: #02010aff;
+--caribbean-current: #006c67ff;
+--timberwolf: #d1d1d1ff;
+--platinum: #dbdbdbff;
+--light-sky-blue: #85c7f2ff;
+}
+.colors-palette-hsl {
+/* CSS HSL */
+--black: hsla(247, 82%, 2%, 1);
+--caribbean-current: hsla(177, 100%, 21%, 1);
+--timberwolf: hsla(0, 0%, 82%, 1);
+--platinum: hsla(0, 0%, 86%, 1);
+--light-sky-blue: hsla(204, 81%, 74%, 1);
+}

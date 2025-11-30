@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ensure full-height so Tailwind's min-h-screen works */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  font-family: Consolas, monaco, monospace;
+}
+
+
