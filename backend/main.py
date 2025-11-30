@@ -21,16 +21,47 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-# Production CORS - allow your frontend domain
-origins = [
-    "http://localhost:5173",
-    "https://coderacer-frontend.onrender.com",  # Your Render frontend URL
-    os.getenv("FRONTEND_URL", "http://localhost:5173")
+# --------------------------
+# CORS configuration
+# --------------------------
+# We support multiple mechanisms:
+# 1. Hard-coded sensible defaults for local dev
+# 2. Single FRONTEND_URL (legacy)
+# 3. Comma‑separated FRONTEND_ORIGINS for multiple domains
+#    e.g. FRONTEND_ORIGINS="https://prod-frontend.onrender.com,https://staging-frontend.onrender.com"
+
+default_local_origins = [
+    "http://localhost:5173",  # Vite default
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",  # Common React port
+    "http://127.0.0.1:3000",
 ]
+
+legacy_frontend = os.getenv("FRONTEND_URL", "").strip()
+multi_frontends_env = os.getenv("FRONTEND_ORIGINS", "")
+multi_frontends = [o.strip() for o in multi_frontends_env.split(",") if o.strip()]
+
+# Known Render frontend (adjust if renamed)
+known_render_frontend = "https://coderacer-frontend.onrender.com"
+
+origins = []
+origins.extend(default_local_origins)
+origins.append(known_render_frontend)
+if legacy_frontend:
+    origins.append(legacy_frontend)
+origins.extend(multi_frontends)
+
+# Deduplicate while preserving order
+seen = set()
+deduped_origins = []
+for o in origins:
+    if o and o not in seen:
+        deduped_origins.append(o)
+        seen.add(o)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=deduped_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
