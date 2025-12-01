@@ -77,10 +77,17 @@ export default function SoloRacePage({ onBack }) {
       setTimeLeftMs(RACE_DURATION_MS);
     }
 
-    // If user is deleting, allow it and reset consecutive errors
+    // If user is deleting, allow it and decrement error counter
     if (value.length < userInput.length) {
       setUserInput(value);
-      setConsecutiveErrors(0);
+      if (consecutiveErrors > 0) {
+        setConsecutiveErrors(prev => prev - 1);
+      }
+      return;
+    }
+
+    // Block typing if already at max errors
+    if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
       return;
     }
 
@@ -90,15 +97,14 @@ export default function SoloRacePage({ onBack }) {
 
     if (isCorrect) {
       setUserInput(value);
-      setConsecutiveErrors(0);
+      // Reset errors when correct character is typed
+      if (consecutiveErrors > 0) {
+        setConsecutiveErrors(0);
+      }
     } else {
       setErrors((prev) => prev + 1);
-      const newConsecutiveErrors = consecutiveErrors + 1;
-      setConsecutiveErrors(newConsecutiveErrors);
-
-      if (newConsecutiveErrors <= MAX_CONSECUTIVE_ERRORS) {
-        setUserInput(value);
-      }
+      setConsecutiveErrors(prev => prev + 1);
+      setUserInput(value);
     }
   };
 
