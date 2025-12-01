@@ -3,37 +3,34 @@ from pathlib import Path
 
 # Add parent directory to path for imports
 if __name__ == "__main__":
-    # Get the backend directory path
     backend_dir = Path(__file__).parent
     parent_dir = backend_dir.parent
     
-    # Add both to sys.path to support different execution contexts
     if str(backend_dir) not in sys.path:
         sys.path.insert(0, str(backend_dir))
     if str(parent_dir) not in sys.path:
         sys.path.insert(0, str(parent_dir))
 
 try:
-    # Try absolute import first (when run as module)
     from backend.models import Language, Snippet
     from backend.database import SessionLocal, engine, Base
 except ImportError:
-    # Fall back to relative import (when run from backend directory)
     from models import Language, Snippet
     from database import SessionLocal, engine, Base
 
 
-# Create all tables
 Base.metadata.create_all(bind=engine)
 
 def seed_data():
-    """Seed the database with initial languages and code snippets"""
+    """Seed the database with languages and code snippets"""
     db = SessionLocal()
     
     try:
         print("🌱 Starting database seeding...")
         
-        # Add Python language if it doesn't exist
+        # ==========================================
+        # PYTHON LANGUAGE
+        # ==========================================
         python_lang = db.query(Language).filter(Language.name == "python").first()
         if not python_lang:
             python_lang = Language(name="python")
@@ -44,57 +41,133 @@ def seed_data():
         else:
             print("ℹ️  Python language already exists")
 
-        # Python code snippets
         python_snippets = [
-            {
-                "code": """def bubble_sort(arr):
-    n = len(arr)
-    for i in range(n):
-        for j in range(0, n - i - 1):
-            if arr[j] > arr[j + 1]:
-                arr[j], arr[j + 1] = arr[j + 1], arr[j]
-    return arr""",
-            },
-            {
-                "code": """def fibonacci(n):
-    if n <= 0:
-        return []
-    elif n == 1:
-        return [0]
-    sequence = [0, 1]
-    while len(sequence) < n:
-        sequence.append(sequence[-1] + sequence[-2])
-    return sequence""",
-            },
-            {
-                "code": """def is_palindrome(text):
-    text = text.lower()
-    text = ''.join(c for c in text if c.isalnum())
-    return text == text[::-1]""",
-            }
+            # 1. List Comprehension
+            """numbers = [1, 2, 3, 4, 5, 6, 7, 8]
+squares = [x**2 for x in numbers if x % 2 == 0]
+print(squares)""",
+            
+            # 2. Fibonacci Function
+            """def fibonacci(n):
+    a, b = 0, 1
+    for _ in range(n):
+        print(a, end=' ')
+        a, b = b, a + b
+
+fibonacci(10)""",
+            
+            # 3. Dictionary Operations
+            """user = {'name': 'Alice', 'age': 25}
+user['email'] = 'alice@example.com'
+for key, value in user.items():
+    print(f"{key}: {value}")""",
+            
+            # 4. Lambda and Filter
+            """numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+evens = list(filter(lambda x: x % 2 == 0, numbers))
+doubled = list(map(lambda x: x * 2, evens))
+print(doubled)""",
+            
+            # 5. Simple Class
+            """class Dog:
+    def __init__(self, name):
+        self.name = name
+    
+    def bark(self):
+        return f"{self.name} says Woof!"
+
+dog = Dog("Buddy")
+print(dog.bark())"""
         ]
 
-        # Add snippets if they don't exist
-        added_count = 0
-        for snippet_data in python_snippets:
-            existing_snippet = db.query(Snippet).filter(
-                Snippet.code == snippet_data["code"]
-            ).first()
-            
-            if not existing_snippet:
-                snippet = Snippet(
-                    language_id=python_lang.id,
-                    code=snippet_data["code"]
-                )
-                db.add(snippet)
-                added_count += 1
-        
-        if added_count > 0:
+        # ==========================================
+        # JAVASCRIPT LANGUAGE
+        # ==========================================
+        js_lang = db.query(Language).filter(Language.name == "javascript").first()
+        if not js_lang:
+            js_lang = Language(name="javascript")
+            db.add(js_lang)
             db.commit()
-            print(f"✅ Added {added_count} Python snippets")
+            db.refresh(js_lang)
+            print("✅ Added JavaScript language")
+        else:
+            print("ℹ️  JavaScript language already exists")
+
+        js_snippets = [
+            # 1. Array Methods
+            """const nums = [1, 2, 3, 4, 5];
+const doubled = nums.map(n => n * 2);
+const evens = nums.filter(n => n % 2 === 0);
+const sum = nums.reduce((a, b) => a + b, 0);
+console.log(doubled, evens, sum);""",
+            
+            # 2. Object Destructuring
+            """const user = {name: 'Bob', age: 30, city: 'NYC'};
+const {name, age} = user;
+console.log(`${name} is ${age} years old`);
+
+const [first, second] = [10, 20, 30];
+console.log(first, second);""",
+            
+            # 3. Arrow Function
+            """const square = x => x * x;
+const add = (a, b) => a + b;
+
+const result = [1, 2, 3].map(square);
+console.log(result);
+console.log(add(5, 3));""",
+            
+            # 4. Template Literals
+            """const name = 'Alice';
+const age = 25;
+const greeting = `Hello, I'm ${name} and I'm ${age} years old.`;
+console.log(greeting);
+
+const multi = `Line 1
+Line 2`;""",
+            
+            # 5. Async Function
+            """async function fetchUser(id) {
+    const response = await fetch(`/api/users/${id}`);
+    const data = await response.json();
+    return data;
+}
+
+fetchUser(1).then(user => console.log(user));"""
+        ]
+
+        # ==========================================
+        # INSERT SNIPPETS
+        # ==========================================
+        python_added = 0
+        for code in python_snippets:
+            existing = db.query(Snippet).filter(Snippet.code == code).first()
+            if not existing:
+                snippet = Snippet(language_id=python_lang.id, code=code)
+                db.add(snippet)
+                python_added += 1
+        
+        js_added = 0
+        for code in js_snippets:
+            existing = db.query(Snippet).filter(Snippet.code == code).first()
+            if not existing:
+                snippet = Snippet(language_id=js_lang.id, code=code)
+                db.add(snippet)
+                js_added += 1
+        
+        if python_added > 0 or js_added > 0:
+            db.commit()
+            print(f"✅ Added {python_added} Python snippets")
+            print(f"✅ Added {js_added} JavaScript snippets")
         else:
             print("ℹ️  All snippets already exist")
         
+        # Show summary
+        python_total = db.query(Snippet).filter(Snippet.language_id == python_lang.id).count()
+        js_total = db.query(Snippet).filter(Snippet.language_id == js_lang.id).count()
+        print(f"\n📊 Summary:")
+        print(f"   Python snippets: {python_total}")
+        print(f"   JavaScript snippets: {js_total}")
         print("🎉 Database seeding completed successfully!")
         
     except Exception as e:
