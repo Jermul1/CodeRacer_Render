@@ -1,8 +1,11 @@
 // components/RaceHeader.jsx
-export default function RaceHeader({ roomCode, wpm, accuracy, currentLine, totalLines, timeText }) {
+export default function RaceHeader({ roomCode, wpm, accuracy, currentLine, totalLines, timeText, language }) {
   return (
     <div className="race-header">
       <h2 className="race-title">Room: {roomCode}</h2>
+      {language && (
+        <div className="race-language">Language: {language}</div>
+      )}
       <div className="race-stats">
         <div className="stat">
           <span className="stat-label">WPM</span>

@@ -70,9 +70,10 @@ class ParticipantRepository(BaseRepository[GameParticipant]):
     
     def get_next_finish_position(self, game_id: int) -> int:
         """Get the next finish position for a game"""
-        max_position = self.db.query(GameParticipant.finish_position).filter(
+        # Lock existing finished rows to avoid race conditions assigning duplicate positions
+        query = self.db.query(GameParticipant.finish_position).filter(
             GameParticipant.game_id == game_id,
             GameParticipant.finish_position.isnot(None)
-        ).order_by(GameParticipant.finish_position.desc()).first()
-        
+        ).order_by(GameParticipant.finish_position.desc()).with_for_update()
+        max_position = query.first()
         return (max_position[0] + 1) if max_position and max_position[0] else 1

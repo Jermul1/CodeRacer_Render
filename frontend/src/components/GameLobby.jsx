@@ -9,6 +9,7 @@ export default function GameLobby({ roomCode, userId, onStartRace, onBack }) {
   const [socket, setSocket] = useState(null);
   const [error, setError] = useState("");
   const [isHost, setIsHost] = useState(false);
+  const [languageName, setLanguageName] = useState("");
 
   useEffect(() => {
     // Fetch initial game data
@@ -18,6 +19,12 @@ export default function GameLobby({ roomCode, userId, onStartRace, onBack }) {
         setGameData(data.game);
         setParticipants(data.participants);
         setIsHost(data.game.host_user_id === userId);
+        if (data.snippet_language) {
+          setLanguageName(data.snippet_language);
+          try {
+            localStorage.setItem('preferredLanguage', data.snippet_language);
+          } catch {}
+        }
       } catch (err) {
         setError("Failed to load game data");
         console.error(err);
@@ -108,6 +115,13 @@ export default function GameLobby({ roomCode, userId, onStartRace, onBack }) {
           </div>
         </div>
 
+        {languageName && (
+          <div className="language-section">
+            <div className="language-label">Language</div>
+            <div className="language-display">{languageName}</div>
+          </div>
+        )}
+
         {error && <div className="error-message">{error}</div>}
 
         <div className="players-section">
@@ -130,6 +144,7 @@ export default function GameLobby({ roomCode, userId, onStartRace, onBack }) {
         <div className="lobby-actions">
           {isHost ? (
             <button 
+              type="button"
               className="btn btn-primary btn-large"
               onClick={handleStartGame}
               disabled={participants.length < 1}
@@ -142,7 +157,7 @@ export default function GameLobby({ roomCode, userId, onStartRace, onBack }) {
             </div>
           )}
           
-          <button className="btn btn-outline" onClick={onBack}>
+          <button type="button" className="btn btn-outline" onClick={onBack}>
             Leave Lobby
           </button>
         </div>

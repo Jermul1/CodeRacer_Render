@@ -50,18 +50,24 @@ class GameService:
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        # Get snippet
+        # Determine snippet (explicit snippet_id overrides language)
         snippet_id = game_data.snippet_id
-        if not snippet_id:
-            snippet = self.snippet_repo.get_random()
-            if not snippet:
-                raise HTTPException(status_code=404, detail="No code snippets available")
-            snippet_id = snippet.id
-        else:
-            # Verify snippet exists
+        snippet = None
+        if snippet_id:
             snippet = self.snippet_repo.get_by_id(snippet_id)
             if not snippet:
                 raise HTTPException(status_code=404, detail="Snippet not found")
+        else:
+            # If language provided choose random snippet from that language
+            if game_data.language:
+                snippet = self.snippet_repo.get_random_by_language(game_data.language)
+                if not snippet:
+                    raise HTTPException(status_code=404, detail="No snippets available for selected language")
+            else:
+                snippet = self.snippet_repo.get_random()
+                if not snippet:
+                    raise HTTPException(status_code=404, detail="No code snippets available")
+            snippet_id = snippet.id
         
         # Create game
         room_code = self._generate_unique_room_code()
@@ -149,10 +155,12 @@ class GameService:
         participants = self.participant_repo.get_by_game(game.id)
         snippet = self.snippet_repo.get_by_id(game.snippet_id)
         
+        language_name = "" if not snippet or not snippet.language else snippet.language.name
         return GameDetailResponse(
             game=GameResponse.model_validate(game),
             participants=[ParticipantResponse.model_validate(p) for p in participants],
-            snippet_code=snippet.code if snippet else ""
+            snippet_code=snippet.code if snippet else "",
+            snippet_language=language_name
         )
     
     def start_game(self, room_code: str) -> dict:
@@ -203,9 +211,33 @@ class GameService:
         if not participant:
             raise HTTPException(status_code=404, detail="Participant not found")
         
-        participant.progress = progress_data.progress
-        participant.wpm = progress_data.wpm
-        participant.accuracy = progress_data.accuracy
+        # Retrieve snippet length for validation/clamping
+        snippet = self.snippet_repo.get_by_id(game.snippet_id)
+        snippet_len = len(snippet.code) if snippet and snippet.code else 0
+
+        # Clamp progress to valid bounds (characters typed)
+        raw_progress = progress_data.progress
+        if raw_progress < 0:
+            raw_progress = 0
+        if snippet_len and raw_progress > snippet_len:
+            raw_progress = snippet_len
+
+        # Clamp WPM & accuracy to sensible anti-cheat bounds
+        raw_wpm = progress_data.wpm
+        if raw_wpm < 0:
+            raw_wpm = 0
+        if raw_wpm > 400:  # Arbitrary high cap
+            raw_wpm = 400
+
+        raw_accuracy = progress_data.accuracy
+        if raw_accuracy < 0:
+            raw_accuracy = 0
+        if raw_accuracy > 100:
+            raw_accuracy = 100
+
+        participant.progress = raw_progress
+        participant.wpm = raw_wpm
+        participant.accuracy = raw_accuracy
         self.participant_repo.update(participant)
         
         return {"message": "Progress updated"}
@@ -236,11 +268,16 @@ class GameService:
         if participant.is_finished:
             raise HTTPException(status_code=400, detail="Already finished")
         
+        # Retrieve snippet length for accurate final progress
+        snippet = self.snippet_repo.get_by_id(game.snippet_id)
+        snippet_len = len(snippet.code) if snippet and snippet.code else 0
+
         # Set finish data
         participant.is_finished = True
         participant.wpm = finish_data.wpm
         participant.accuracy = finish_data.accuracy
-        participant.progress = 100
+        # Progress represents characters typed; set to full snippet length if known
+        participant.progress = snippet_len if snippet_len else participant.progress
         participant.finish_position = self.participant_repo.get_next_finish_position(game.id)
         self.participant_repo.update(participant)
         

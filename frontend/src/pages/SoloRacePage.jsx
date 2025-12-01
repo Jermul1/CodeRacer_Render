@@ -1,6 +1,6 @@
 // pages/SoloRacePage.jsx
 import { useEffect, useState } from "react";
-import { getRandomSnippet } from "../api";
+import { getRandomSnippet, getAvailableLanguages } from "../api";
 import CodeDisplay from "../components/CodeDisplay";
 import TypingInput from "../components/TypingInput";
 import StatsPanel from "../components/StatsPanel";
@@ -25,6 +25,15 @@ export default function SoloRacePage({ onBack }) {
   const [endTime, setEndTime] = useState(null);
   const [errors, setErrors] = useState(0);
   const [consecutiveErrors, setConsecutiveErrors] = useState(0);
+  const [languages, setLanguages] = useState([]);
+  const [languagesLoading, setLanguagesLoading] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState(() => {
+    try {
+      return localStorage.getItem('preferredLanguage') || 'python';
+    } catch {
+      return 'python';
+    }
+  });
 
   const MAX_CONSECUTIVE_ERRORS = 7;
   const RACE_DURATION_MS = 90_000; // 1 minute 30 seconds
@@ -38,24 +47,54 @@ export default function SoloRacePage({ onBack }) {
   };
 
   useEffect(() => {
-    async function fetchPassage() {
+    // Load available languages once
+    (async () => {
       try {
-        const data = await getRandomSnippet("python");
+        setLanguagesLoading(true);
+        const langs = await getAvailableLanguages();
+        setLanguages(langs);
+        if (langs.length && !selectedLanguage) {
+          const initial = localStorage.getItem('preferredLanguage') || langs[0];
+          setSelectedLanguage(initial);
+        }
+      } catch (err) {
+        console.error("Failed to load languages", err);
+      } finally {
+        setLanguagesLoading(false);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    // Fetch snippet when language changes
+    async function fetchPassage(lang) {
+      try {
+        const data = await getRandomSnippet(lang || "python");
         const text =
-          data?.text ?? data?.snippet ?? data?.code ?? data?.snippet_code ?? 
+          data?.text ?? data?.snippet ?? data?.code ?? data?.snippet_code ??
           (typeof data === "string" ? data : JSON.stringify(data));
         setSnippet(text);
         setLines(text.split('\n'));
+        // Reset race state on snippet change
+        setUserInput("");
+        setCurrentLineIndex(0);
+        setCompletedLines([]);
+        setIsFinished(false);
+        setStartTime(null);
+        setEndTime(null);
+        setErrors(0);
+        setConsecutiveErrors(0);
+        setEndDeadline(null);
+        setTimeLeftMs(RACE_DURATION_MS);
       } catch (err) {
         console.error("Error fetching passage:", err);
         console.log("Using fallback snippet");
-        // Use fallback snippet if backend fails
         setSnippet(FALLBACK_SNIPPET);
         setLines(FALLBACK_SNIPPET.split('\n'));
       }
     }
-    fetchPassage();
-  }, []);
+    fetchPassage(selectedLanguage);
+  }, [selectedLanguage]);
 
   // Get the trimmed version of current line (target to type)
   const getCurrentLine = () => {
@@ -209,6 +248,27 @@ export default function SoloRacePage({ onBack }) {
         <>
           <div className="race-header">
             <h2 className="race-title">Solo Race</h2>
+            <div className="race-language-select">
+              <label className="input-label" style={{ marginRight: 8 }}>Language</label>
+              <select
+                className="input-field"
+                value={selectedLanguage}
+                disabled={languagesLoading && !languages.length}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedLanguage(value);
+                  try { localStorage.setItem('preferredLanguage', value); } catch {}
+                }}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onFocus={(e) => e.stopPropagation()}
+              >
+                {languagesLoading && <option>Loading...</option>}
+                {!languagesLoading && languages.map((lang) => (
+                  <option key={lang} value={lang}>{lang}</option>
+                ))}
+              </select>
+            </div>
             <div className="race-stats">
               <div className="stat">
                 <span className="stat-label">WPM</span>

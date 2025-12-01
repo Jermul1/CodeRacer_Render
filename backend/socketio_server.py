@@ -1,9 +1,12 @@
 import socketio
-from sqlalchemy.orm import Session
 import os
+from datetime import datetime
+
 from .database import SessionLocal
 from .models import Game, GameParticipant
-from datetime import datetime
+from .services.game_service import GameService
+from .schemas.game import ParticipantProgress, ParticipantFinish
+
 
 # Production CORS
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
@@ -13,22 +16,18 @@ allowed_origins = [
     frontend_url
 ]
 
-# Create Socket.IO server
+# Optional Redis message queue for horizontal scaling
+redis_url = os.getenv("REDIS_URL")
+
+# Create Socket.IO server (attach Redis if configured)
 sio = socketio.AsyncServer(
     async_mode='asgi',
-    cors_allowed_origins=allowed_origins
+    cors_allowed_origins=allowed_origins,
+    message_queue=redis_url if redis_url else None
 )
 
 # Store active connections: room_code -> {sid -> user_id}
 active_connections = {}
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        return db
-    finally:
-        db.close()
 
 
 @sio.event
@@ -107,25 +106,27 @@ async def start_game(sid, data):
     """Host starts the game"""
     room_code = data.get('room_code', '').upper()
     user_id = data.get('user_id')
-    
+    if not room_code or not user_id:
+        await sio.emit('error', {'message': 'Missing room_code or user_id'}, to=sid)
+        return
     db = SessionLocal()
     try:
-        game = db.query(Game).filter(Game.room_code == room_code).first()
+        svc = GameService(db)
+        game = svc.game_repo.get_by_room_code(room_code)
         if not game:
             await sio.emit('error', {'message': 'Game not found'}, to=sid)
             return
-        
         if game.host_user_id != user_id:
             await sio.emit('error', {'message': 'Only host can start'}, to=sid)
             return
-        
-        game.status = "in_progress"
+        if game.status != 'waiting':
+            await sio.emit('error', {'message': 'Game already started or finished'}, to=sid)
+            return
+        game.status = 'in_progress'
         game.started_at = datetime.utcnow()
-        db.commit()
-        
-        # Notify all players
+        svc.game_repo.update(game)
         await sio.emit('game_started', {
-            'status': 'in_progress',
+            'status': game.status,
             'started_at': game.started_at.isoformat()
         }, room=room_code)
     finally:
@@ -140,31 +141,34 @@ async def update_progress(sid, data):
     progress = data.get('progress', 0)
     wpm = data.get('wpm', 0.0)
     accuracy = data.get('accuracy', 0.0)
-    
+    if not room_code or not user_id:
+        await sio.emit('error', {'message': 'Missing room_code or user_id'}, to=sid)
+        return
     db = SessionLocal()
     try:
-        game = db.query(Game).filter(Game.room_code == room_code).first()
-        if not game:
+        svc = GameService(db)
+        try:
+            svc.update_progress(ParticipantProgress(
+                room_code=room_code,
+                user_id=user_id,
+                progress=progress,
+                wpm=wpm,
+                accuracy=accuracy
+            ))
+        except Exception as e:
+            await sio.emit('error', {'message': str(e)}, to=sid)
             return
-        
-        participant = db.query(GameParticipant).filter(
-            GameParticipant.game_id == game.id,
-            GameParticipant.user_id == user_id
-        ).first()
-        
+        # Fetch participant for broadcast (ensures clamped values)
+        participant = svc.participant_repo.get_by_game_and_user(
+            svc.game_repo.get_by_room_code(room_code).id, user_id
+        )
         if participant:
-            participant.progress = progress
-            participant.wpm = wpm
-            participant.accuracy = accuracy
-            db.commit()
-            
-            # Broadcast progress to all players in room
             await sio.emit('progress_update', {
                 'user_id': user_id,
                 'username': participant.username,
-                'progress': progress,
-                'wpm': float(wpm),
-                'accuracy': float(accuracy)
+                'progress': participant.progress,
+                'wpm': float(participant.wpm),
+                'accuracy': float(participant.accuracy)
             }, room=room_code)
     finally:
         db.close()
@@ -177,68 +181,50 @@ async def finish_race(sid, data):
     user_id = data.get('user_id')
     wpm = data.get('wpm', 0.0)
     accuracy = data.get('accuracy', 0.0)
-    
+    if not room_code or not user_id:
+        await sio.emit('error', {'message': 'Missing room_code or user_id'}, to=sid)
+        return
     db = SessionLocal()
     try:
-        game = db.query(Game).filter(Game.room_code == room_code).first()
+        svc = GameService(db)
+        game = svc.game_repo.get_by_room_code(room_code)
         if not game:
             return
-        
-        participant = db.query(GameParticipant).filter(
-            GameParticipant.game_id == game.id,
-            GameParticipant.user_id == user_id
-        ).first()
-        
-        if participant and not participant.is_finished:
-            participant.is_finished = True
-            participant.wpm = wpm
-            participant.accuracy = accuracy
-            participant.finished_at = datetime.utcnow()
-            
-            # Calculate finish position
-            finished_count = db.query(GameParticipant).filter(
-                GameParticipant.game_id == game.id,
-                GameParticipant.is_finished == True
-            ).count()
-            participant.finish_position = finished_count
-            
-            db.commit()
-            
-            # Notify all players
+        try:
+            resp = svc.finish_participant(ParticipantFinish(
+                room_code=room_code,
+                user_id=user_id,
+                wpm=wpm,
+                accuracy=accuracy
+            ))
+        except Exception as e:
+            await sio.emit('error', {'message': str(e)}, to=sid)
+            return
+        participant = svc.participant_repo.get_by_game_and_user(game.id, user_id)
+        if participant:
             await sio.emit('player_finished', {
                 'user_id': user_id,
                 'username': participant.username,
-                'wpm': float(wpm),
-                'accuracy': float(accuracy),
-                'position': finished_count
+                'wpm': float(participant.wpm),
+                'accuracy': float(participant.accuracy),
+                'position': participant.finish_position
             }, room=room_code)
-            
-            # Check if all players finished
-            total_participants = db.query(GameParticipant).filter(
-                GameParticipant.game_id == game.id
-            ).count()
-            
-            if finished_count == total_participants:
-                game.status = "finished"
-                game.finished_at = datetime.utcnow()
-                db.commit()
-                
-                # Get final results
-                all_participants = db.query(GameParticipant).filter(
-                    GameParticipant.game_id == game.id
-                ).order_by(GameParticipant.finish_position).all()
-                
-                results = [{
-                    'user_id': p.user_id,
-                    'username': p.username,
-                    'wpm': float(p.wpm),
-                    'accuracy': float(p.accuracy),
-                    'position': p.finish_position
-                } for p in all_participants]
-                
-                await sio.emit('game_finished', {
-                    'results': results
-                }, room=room_code)
+        # If game finished, broadcast ordered results
+        game = svc.game_repo.get_by_room_code(room_code)
+        if game.status == 'finished':
+            all_participants = svc.participant_repo.get_by_game(game.id)
+            ordered = sorted(
+                [p for p in all_participants if p.finish_position is not None],
+                key=lambda x: x.finish_position
+            )
+            results = [{
+                'user_id': p.user_id,
+                'username': p.username,
+                'wpm': float(p.wpm),
+                'accuracy': float(p.accuracy),
+                'position': p.finish_position
+            } for p in ordered]
+            await sio.emit('game_finished', {'results': results}, room=room_code)
     finally:
         db.close()
 

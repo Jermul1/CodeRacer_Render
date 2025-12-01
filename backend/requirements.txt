@@ -10,3 +10,4 @@ passlib[argon2]
 python-dotenv
 python-socketio
 aiofiles
+redis

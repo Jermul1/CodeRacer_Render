@@ -19,6 +19,7 @@ export default function MultiplayerRace({ roomCode, userId, onFinish }) {
   const [gameData, setGameData] = useState(null);
   const [snippet, setSnippet] = useState("");
   const [participants, setParticipants] = useState([]);
+  const [snippetLanguage, setSnippetLanguage] = useState("");
   
   // Typing state
   const [userInput, setUserInput] = useState("");
@@ -74,6 +75,7 @@ export default function MultiplayerRace({ roomCode, userId, onFinish }) {
       setGameData(data.game);
       setSnippet(data.snippet_code);
       setParticipants(data.participants);
+      if (data.snippet_language) setSnippetLanguage(data.snippet_language);
     } catch (err) {
       console.error("Failed to load game:", err);
     }
@@ -330,6 +332,7 @@ export default function MultiplayerRace({ roomCode, userId, onFinish }) {
         currentLine={currentLineIndex + 1}
         totalLines={lines.length}
         timeText={formatTime(timeLeftMs)}
+        language={snippetLanguage}
       />
 
       <ParticipantsList
