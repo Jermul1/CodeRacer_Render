@@ -63,7 +63,9 @@ app.include_router(users_router.router)
 
 
 # --------------------------
-# WRAP FASTAPI WITH SOCKET.IO
-# (prevents socket.io from swallowing OPTIONS)
+# MOUNT SOCKET.IO ASGI APP
 # --------------------------
-app = socketio.ASGIApp(sio, other_asgi_app=app)
+# Mount Socket.IO on /socket.io path instead of wrapping entire app
+# This keeps FastAPI routes (including health check) accessible
+sio_asgi_app = socketio.ASGIApp(socketio_server=sio)
+app.mount("/socket.io", sio_asgi_app)

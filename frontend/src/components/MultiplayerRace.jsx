@@ -81,7 +81,7 @@ export default function MultiplayerRace({ roomCode, userId, onFinish }) {
 
   const setupSocket = () => {
     const newSocket = io(SOCKET_URL, {
-      path: "/socket.io/",
+      path: "/socket.io",
       transports: ["websocket", "polling"]
     });
 

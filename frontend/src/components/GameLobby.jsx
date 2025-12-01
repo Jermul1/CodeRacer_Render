@@ -30,7 +30,7 @@ export default function GameLobby({ roomCode, userId, onStartRace, onBack }) {
     const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
     const newSocket = io(SOCKET_URL, {
-      path: "/socket.io/",
+      path: "/socket.io",
       transports: ["websocket", "polling"]
     });
 
