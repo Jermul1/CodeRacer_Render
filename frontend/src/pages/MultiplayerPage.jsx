@@ -1,7 +1,8 @@
 // pages/MultiplayerPage.jsx
 import { useState } from "react";
-import { createGame, joinGame, signup } from "../api";
+import { createGame, joinGame, signup, getAvailableLanguages } from "../api";
 import GameLobby from "../components/GameLobby";
+import { getGame } from "../api";
 import MultiplayerRace from "../components/MultiplayerRace";
 import "../styles/MultiplayerRace.css";
 
@@ -15,9 +16,37 @@ export default function MultiplayerPage({ userId, username, onBack }) {
   const [guestName, setGuestName] = useState("");
   const [guestUserId, setGuestUserId] = useState(null);
   const [creatingGuest, setCreatingGuest] = useState(false);
+  const [languages, setLanguages] = useState([]);
+  const [languagesLoading, setLanguagesLoading] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState(() => {
+    try {
+      return localStorage.getItem('preferredLanguage') || "";
+    } catch {
+      return "";
+    }
+  });
 
   const effectiveUserId = userId || guestUserId;
   const effectiveUsername = username || guestName || "Guest";
+
+  // Fetch languages once when menu is shown first time
+  if (view === 'menu' && languages.length === 0 && !languagesLoading) {
+    (async () => {
+      try {
+        setLanguagesLoading(true);
+        const langs = await getAvailableLanguages();
+        setLanguages(langs);
+        if (langs.length && !selectedLanguage) {
+          const initial = localStorage.getItem('preferredLanguage') || langs[0];
+          setSelectedLanguage(initial);
+        }
+      } catch (e) {
+        console.error('Failed to load languages', e);
+      } finally {
+        setLanguagesLoading(false);
+      }
+    })();
+  }
 
   const handleCreateGame = async () => {
     if (!userId) {
@@ -27,7 +56,8 @@ export default function MultiplayerPage({ userId, username, onBack }) {
     setLoading(true);
     setError("");
     try {
-      const response = await createGame(userId);
+      const languageToSend = selectedLanguage || null;
+      const response = await createGame(userId, null, 4, languageToSend);
       setRoomCode(response.room_code);
       setView("lobby");
     } catch (err) {
@@ -137,7 +167,27 @@ export default function MultiplayerPage({ userId, username, onBack }) {
                   Login required to create games
                 </p>
               )}
+              <div className="input-group mb-md">
+                <label className="input-label">Language</label>
+                <select
+                  className="input-field"
+                  value={selectedLanguage}
+                  disabled={languagesLoading || !languages.length}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSelectedLanguage(value);
+                    try { localStorage.setItem('preferredLanguage', value); } catch {}
+                  }}
+                >
+                  {languagesLoading && <option>Loading...</option>}
+                  {!languagesLoading && languages.map(lang => (
+                    <option key={lang} value={lang}>{lang}</option>
+                  ))}
+                </select>
+              </div>
+
               <button
+                type="button"
                 onClick={handleCreateGame}
                 disabled={loading || !userId}
                 className="btn btn-primary btn-full btn-large"
@@ -172,6 +222,7 @@ export default function MultiplayerPage({ userId, username, onBack }) {
                 />
               </div>
               <button
+                type="button"
                 onClick={handleJoinGame}
                 disabled={
                   loading ||
@@ -186,6 +237,7 @@ export default function MultiplayerPage({ userId, username, onBack }) {
             </div>
 
             <button
+              type="button"
               onClick={onBack}
               className="btn btn-outline-secondary mt-xl"
             >
@@ -249,8 +301,35 @@ export default function MultiplayerPage({ userId, username, onBack }) {
               </div>
             ))}
           </div>
+          <div className="text-center mt-md">
+            <button
+              type="button"
+              className="btn btn-primary btn-large"
+              disabled={!userId}
+              onClick={async () => {
+                try {
+                  // Use previous game's language for rematch
+                  const details = await getGame(roomCode);
+                  const stored = (() => { try { return localStorage.getItem('preferredLanguage'); } catch { return null; } })();
+                  const lang = details?.snippet_language || stored || selectedLanguage || null;
+                  const response = await createGame(userId, null, 4, lang);
+                  setRoomCode(response.room_code);
+                  setRaceResults(null);
+                  setView("lobby");
+                } catch (e) {
+                  setError(e.message || "Failed to start a new game");
+                }
+              }}
+            >
+              🔁 Play Again
+            </button>
+            {!userId && (
+              <div className="text-muted mt-sm text-small">Login required to create a new game</div>
+            )}
+          </div>
           <div className="text-center mt-xl">
             <button
+              type="button"
               onClick={handleBackToMenu}
               className="btn btn-primary btn-large"
             >

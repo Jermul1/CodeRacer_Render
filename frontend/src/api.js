@@ -59,12 +59,13 @@ export const login = async (email, password) => {
   }
 };
 
-export const createGame = async (userId, snippetId = null, maxPlayers = 4) => {
+export const createGame = async (userId, snippetId = null, maxPlayers = 4, language = null) => {
   try {
     const res = await axios.post(`${API_URL}/games/create`, {
       user_id: userId,
       snippet_id: snippetId,
-      max_players: maxPlayers
+      max_players: maxPlayers,
+      language: language
     });
     return res.data;
   } catch (error) {

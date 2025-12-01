@@ -50,18 +50,24 @@ class GameService:
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        # Get snippet
+        # Determine snippet (explicit snippet_id overrides language)
         snippet_id = game_data.snippet_id
-        if not snippet_id:
-            snippet = self.snippet_repo.get_random()
-            if not snippet:
-                raise HTTPException(status_code=404, detail="No code snippets available")
-            snippet_id = snippet.id
-        else:
-            # Verify snippet exists
+        snippet = None
+        if snippet_id:
             snippet = self.snippet_repo.get_by_id(snippet_id)
             if not snippet:
                 raise HTTPException(status_code=404, detail="Snippet not found")
+        else:
+            # If language provided choose random snippet from that language
+            if game_data.language:
+                snippet = self.snippet_repo.get_random_by_language(game_data.language)
+                if not snippet:
+                    raise HTTPException(status_code=404, detail="No snippets available for selected language")
+            else:
+                snippet = self.snippet_repo.get_random()
+                if not snippet:
+                    raise HTTPException(status_code=404, detail="No code snippets available")
+            snippet_id = snippet.id
         
         # Create game
         room_code = self._generate_unique_room_code()
@@ -149,10 +155,12 @@ class GameService:
         participants = self.participant_repo.get_by_game(game.id)
         snippet = self.snippet_repo.get_by_id(game.snippet_id)
         
+        language_name = "" if not snippet or not snippet.language else snippet.language.name
         return GameDetailResponse(
             game=GameResponse.model_validate(game),
             participants=[ParticipantResponse.model_validate(p) for p in participants],
-            snippet_code=snippet.code if snippet else ""
+            snippet_code=snippet.code if snippet else "",
+            snippet_language=language_name
         )
     
     def start_game(self, room_code: str) -> dict:

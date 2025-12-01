@@ -135,6 +135,46 @@ Line 2`;""",
 
 fetchUser(1).then(user => console.log(user));"""
         ]
+# ==========================================
+# BRAINFUCK LANGUAGE
+# ==========================================
+        bf_lang = db.query(Language).filter(Language.name == "brainfuck").first()
+        if not bf_lang:
+            bf_lang = Language(name="brainfuck")
+            db.add(bf_lang)
+            db.commit()
+            db.refresh(bf_lang)
+            print("✅ Added Brainfuck language")
+        else:
+            print("ℹ️  Brainfuck language already exists")
+
+        bf_snippets = [
+
+    # 1. Hello World (decorative-long)
+    """++++++++++[>+++++++>++++++++++>+++++++++++<<<-]>>>++.<<++.>-.+++++++..+++.>>++++.<---.<<++.>>-.+++.------.--------.>>>+.>++.""",
+
+    # 2. Fibonacci (first 10 numbers)
+    """++++++++++>+>+<<<[
+    >.>.<<
+    >[-<+>]< 
+    >>[-<+>]< 
+    <-]""",
+
+    # 3. Reverse input characters until newline
+    """>,[>+>+<<- >>[<<+>>-] <<,] <[>. [-] <]""",
+
+    # 4. ASCII counter 0–255 loop
+    """+[>++++++++[<+++++++++>-]<.>-<]""",
+
+    # 5. Memory pattern fill + print
+    """++++++++++[
+    >+++++++++<-
+]
+>++++++++++[
+    .>+
+    -
+]"""
+        ]
 
         # ==========================================
         # INSERT SNIPPETS
@@ -154,21 +194,30 @@ fetchUser(1).then(user => console.log(user));"""
                 snippet = Snippet(language_id=js_lang.id, code=code)
                 db.add(snippet)
                 js_added += 1
+        bf_added = 0
+        for code in bf_snippets:
+            existing = db.query(Snippet).filter(Snippet.code == code).first()
+            if not existing:
+                snippet = Snippet(language_id=bf_lang.id, code=code)
+                db.add(snippet)
+                bf_added += 1
         
-        if python_added > 0 or js_added > 0:
+        if python_added > 0 or js_added > 0 or bf_added > 0:
             db.commit()
             print(f"✅ Added {python_added} Python snippets")
             print(f"✅ Added {js_added} JavaScript snippets")
+            print(f"✅ Added {bf_added} Brainfuck snippets")
         else:
             print("ℹ️  All snippets already exist")
-        
-        # Show summary
+
         python_total = db.query(Snippet).filter(Snippet.language_id == python_lang.id).count()
         js_total = db.query(Snippet).filter(Snippet.language_id == js_lang.id).count()
+        bf_total = db.query(Snippet).filter(Snippet.language_id == bf_lang.id).count()
+
         print(f"\n📊 Summary:")
         print(f"   Python snippets: {python_total}")
         print(f"   JavaScript snippets: {js_total}")
-        print("🎉 Database seeding completed successfully!")
+        print(f"   Brainfuck snippets: {bf_total}")
         
     except Exception as e:
         print(f"❌ Error seeding database: {e}")

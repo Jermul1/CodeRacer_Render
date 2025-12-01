@@ -11,6 +11,7 @@ class GameCreate(BaseModel):
     user_id: int
     snippet_id: Optional[int] = None
     max_players: int = 4
+    language: Optional[str] = None  # Optional language name for random snippet selection
 
 
 class GameJoin(BaseModel):
@@ -73,3 +74,4 @@ class GameDetailResponse(BaseModel):
     game: GameResponse
     participants: List[ParticipantResponse]
     snippet_code: str
+    snippet_language: Optional[str] = None
