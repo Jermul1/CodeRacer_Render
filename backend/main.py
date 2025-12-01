@@ -30,14 +30,17 @@ app = FastAPI(lifespan=lifespan)
 # --------------------------
 # CORS CONFIGURATION
 # --------------------------
-# Use environment variable for production, with fallbacks for local dev
 env = os.getenv("ENV", "development")
-frontend_url = os.getenv("FRONTEND_URL", "https://coderacer-frontend.onrender.com")
+
+# Get frontend URL from env, with common variations
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
 if env == "production":
     allowed_origins = [
         frontend_url,
+        # Add wildcard for Render preview/branch deploys if needed
         "https://coderacer-frontend.onrender.com",
+        "https://coderacer-frontend-*.onrender.com",  # Covers any Render suffix
     ]
 else:
     allowed_origins = [

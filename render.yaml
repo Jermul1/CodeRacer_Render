@@ -19,6 +19,10 @@ services:
           property: connectionString
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: ENV
+        value: production
+      - key: FRONTEND_URL
+        value: https://coderacer-frontend.onrender.com  # UPDATE THIS with your actual frontend URL
     healthCheckPath: /
 
   # Frontend Static Site
@@ -33,4 +37,4 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://coderacer-backend.onrender.com
+        value: https://coderacer-backend-fs4h.onrender.com
