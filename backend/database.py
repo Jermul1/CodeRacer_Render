@@ -11,8 +11,8 @@ if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL not set in .env")
 
 
-# Create SQLAlchemy engine for PostgreSQL
-engine = create_engine(DATABASE_URL)
+# Create SQLAlchemy engine for PostgreSQL with connection health checks
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
 # Database session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
