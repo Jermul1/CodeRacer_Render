@@ -28,19 +28,31 @@ app = FastAPI(lifespan=lifespan)
 
 
 # --------------------------
-# CORS MUST RUN BEFORE ANYTHING ELSE
+# CORS CONFIGURATION
 # --------------------------
-allowed_origins = [
-    "https://coderacer-frontend.onrender.com",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+# Use environment variable for production, with fallbacks for local dev
+env = os.getenv("ENV", "development")
+frontend_url = os.getenv("FRONTEND_URL", "https://coderacer-frontend.onrender.com")
+
+if env == "production":
+    allowed_origins = [
+        frontend_url,
+        "https://coderacer-frontend.onrender.com",
+    ]
+else:
+    allowed_origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        frontend_url,
+    ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -63,9 +75,12 @@ app.include_router(users_router.router)
 
 
 # --------------------------
-# MOUNT SOCKET.IO ASGI APP
+# WRAP WITH SOCKET.IO
 # --------------------------
-# Mount Socket.IO on /socket.io path instead of wrapping entire app
-# This keeps FastAPI routes (including health check) accessible
-sio_asgi_app = socketio.ASGIApp(socketio_server=sio)
-app.mount("/socket.io", sio_asgi_app)
+# Wrap the entire FastAPI app with Socket.IO
+# Socket.IO will handle its paths, FastAPI will handle the rest
+app = socketio.ASGIApp(
+    socketio_server=sio,
+    other_asgi_app=app,
+    socketio_path="/socket.io"
+)
