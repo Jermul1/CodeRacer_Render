@@ -5,6 +5,7 @@ import CodeDisplay from "../components/CodeDisplay";
 import TypingInput from "../components/TypingInput";
 import StatsPanel from "../components/StatsPanel";
 import ResultsCard from "../components/ResultsCard";
+import Instructions from "../components/Instructions";
 import "../styles/MultiplayerRace.css";
 
 // Fallback snippet if backend is unavailable
@@ -310,6 +311,8 @@ export default function SoloRacePage({ onBack }) {
               </div>
             </div>
           </div>
+
+          <Instructions />
 
           <CodeDisplay
             lines={lines}

@@ -7,6 +7,7 @@ import TypingInput from "./TypingInput";
 import RaceCountdown from "./RaceCountdown";
 import RaceHeader from "./RaceHeader";
 import ParticipantsList from "./ParticipantsList";
+import Instructions from "./Instructions";
 import "../styles/MultiplayerRace.css";
 
 const MAX_CONSECUTIVE_ERRORS = 7;
@@ -358,6 +359,8 @@ export default function MultiplayerRace({ roomCode, userId, onFinish }) {
         participants={participants}
         totalSnippetLength={snippet.length}
       />
+
+      <Instructions />
 
       <CodeDisplay
         lines={lines}
