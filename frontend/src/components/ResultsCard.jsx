@@ -1,9 +1,9 @@
 // components/ResultsCard.jsx
-export default function ResultsCard({ wpm, accuracy, onPlayAgain, onBack }) {
+export default function ResultsCard({ wpm, accuracy, timeRanOut, onPlayAgain, onBack }) {
   return (
     <div className="results-container">
       <h2 className="results-title">
-        Typing Test Complete!
+        {timeRanOut ? "Time ran out" : "Typing Test Complete!"}
       </h2>
       <div className="results-stats">
         <div className="stat-row">

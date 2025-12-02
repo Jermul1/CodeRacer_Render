@@ -8,7 +8,7 @@ export default function Footer() {
         <span>You either code in the sink or sink in the code.</span>
         <span>•</span>
         <a 
-          href="https://github.com" 
+          href="https://github.com/Jermul1/CodeRacer_Render.git" 
           target="_blank" 
           rel="noopener noreferrer"
           className="footer-link"

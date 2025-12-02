@@ -26,6 +26,7 @@ export default function SoloRacePage({ onBack }) {
   const [endTime, setEndTime] = useState(null);
   const [errors, setErrors] = useState(0);
   const [consecutiveErrors, setConsecutiveErrors] = useState(0);
+  const [timeRanOut, setTimeRanOut] = useState(false);
   const [languages, setLanguages] = useState([]);
   const [languagesLoading, setLanguagesLoading] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(() => {
@@ -37,7 +38,7 @@ export default function SoloRacePage({ onBack }) {
   });
 
   const MAX_CONSECUTIVE_ERRORS = 7;
-  const RACE_DURATION_MS = 90_000; // 1 minute 30 seconds
+  const RACE_DURATION_MS = 120000; // 2 minutes
   const [endDeadline, setEndDeadline] = useState(null);
   const [timeLeftMs, setTimeLeftMs] = useState(RACE_DURATION_MS);
   const formatTime = (ms) => {
@@ -87,6 +88,7 @@ export default function SoloRacePage({ onBack }) {
         setConsecutiveErrors(0);
         setEndDeadline(null);
         setTimeLeftMs(RACE_DURATION_MS);
+        setTimeRanOut(false);
       } catch (err) {
         console.error("Error fetching passage:", err);
         console.log("Using fallback snippet");
@@ -160,6 +162,7 @@ export default function SoloRacePage({ onBack }) {
           const end = Date.now();
           setEndTime(end);
           setIsFinished(true);
+          setTimeRanOut(true);
         }
       } else {
         setTimeLeftMs(left);
@@ -348,6 +351,7 @@ export default function SoloRacePage({ onBack }) {
         <ResultsCard
           wpm={wpm}
           accuracy={accuracy}
+          timeRanOut={timeRanOut}
           onPlayAgain={() => window.location.reload()}
           onBack={onBack}
         />
