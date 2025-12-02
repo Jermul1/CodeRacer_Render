@@ -242,8 +242,13 @@ export default function SoloRacePage({ onBack }) {
     );
   }
 
+  // Calculate progress percentage
+  const totalChars = snippet.length;
+  const currentChars = completedLines.join('\n').length + userInput.length;
+  const progressPercentage = (currentChars / totalChars) * 100;
+
   return (
-    <div className="content-box-large" style={{ margin: '0 auto' }}>
+    <div className="race-container">
       {!isFinished ? (
         <>
           <div className="race-header">
@@ -278,13 +283,28 @@ export default function SoloRacePage({ onBack }) {
                 <span className="stat-label">Accuracy</span>
                 <span className="stat-value">{calculateAccuracy()}%</span>
               </div>
-              <div className="stat">
-                <span className="stat-label">Line</span>
-                <span className="stat-value">{currentLineIndex + 1}/{lines.length}</span>
-              </div>
+              
               <div className="stat">
                 <span className="stat-label">Time</span>
                 <span className="stat-value">{formatTime(timeLeftMs)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="participants-progress">
+            <div className="participant-row">
+              <div className="participant-info">
+                <span className="participant-name">Your Progress</span>
+                <span className="participant-wpm">{calculateWPM()} WPM</span>
+              </div>
+              <div className="progress-bar-container">
+                <div 
+                  className="progress-bar-fill" 
+                  style={{ width: `${progressPercentage}%` }}
+                >
+                  {isFinished && <span className="finish-flag">🏁</span>}
+                </div>
               </div>
             </div>
           </div>

@@ -160,7 +160,7 @@
 
 .char-cursor {
   position: relative;
-  background-color: rgba(74, 144, 226, 0.2);
+
 }
 
 .char-cursor::after {
@@ -240,7 +240,6 @@
 
 .line-indent {
   color: transparent;
-  background-color: rgba(200, 200, 200, 0.1);
 }
 
 .error-warning {

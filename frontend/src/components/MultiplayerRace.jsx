@@ -41,6 +41,7 @@ export default function MultiplayerRace({ roomCode, userId, onFinish }) {
   // Socket & refs
   const [socket, setSocket] = useState(null);
   const inputRef = useRef(null);
+  const lastBroadcastRef = useRef(0);
 
   // Computed values
   const lines = snippet.split('\n');
@@ -170,6 +171,33 @@ export default function MultiplayerRace({ roomCode, userId, onFinish }) {
     return Math.round(((totalChars - errors) / totalChars) * 100);
   };
 
+  // ==================== PROGRESS BROADCASTING ====================
+
+  const broadcastProgress = (completedLinesOverride = null) => {
+    if (!socket) return;
+
+    const linesToUse = completedLinesOverride || completedLines;
+    const totalChars = linesToUse.join('\n').length + userInput.length;
+    
+    socket.emit("update_progress", {
+      room_code: roomCode,
+      user_id: userId,
+      progress: totalChars,
+      wpm: calculateWPM(),
+      accuracy: calculateAccuracy()
+    });
+    
+    lastBroadcastRef.current = Date.now();
+  };
+
+  const throttledBroadcastProgress = () => {
+    const now = Date.now();
+    // Throttle to every 200ms
+    if (now - lastBroadcastRef.current > 200) {
+      broadcastProgress();
+    }
+  };
+
   // ==================== INPUT HANDLERS ====================
 
   const handleInputChange = (e) => {
@@ -178,31 +206,35 @@ export default function MultiplayerRace({ roomCode, userId, onFinish }) {
     const value = e.target.value;
     const currentLine = getCurrentLine();
 
-    // Handle deletion
+    // If user is deleting, allow it and decrement error counter
     if (value.length < userInput.length) {
       setUserInput(value);
-      setConsecutiveErrors(0);
+      if (consecutiveErrors > 0) {
+        setConsecutiveErrors(prev => prev - 1);
+      }
+      throttledBroadcastProgress();
       return;
     }
 
-    // Validate new character
+    // Block typing if already at max errors
+    if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+      return;
+    }
+
+    // Check if the new character is correct
     const newCharIndex = value.length - 1;
     const isCorrect = value[newCharIndex] === currentLine[newCharIndex];
 
     if (isCorrect) {
       setUserInput(value);
-      setConsecutiveErrors(0);
+      // Reset errors when correct character is typed
+      if (consecutiveErrors > 0) {
+        setConsecutiveErrors(0);
+      }
+      throttledBroadcastProgress();
     } else {
-      handleTypingError(value);
-    }
-  };
-
-  const handleTypingError = (value) => {
-    setErrors((prev) => prev + 1);
-    const newConsecutiveErrors = consecutiveErrors + 1;
-    setConsecutiveErrors(newConsecutiveErrors);
-
-    if (newConsecutiveErrors <= MAX_CONSECUTIVE_ERRORS) {
+      setErrors((prev) => prev + 1);
+      setConsecutiveErrors(prev => prev + 1);
       setUserInput(value);
     }
   };
@@ -237,27 +269,13 @@ export default function MultiplayerRace({ roomCode, userId, onFinish }) {
     setUserInput("");
     setConsecutiveErrors(0);
 
-    // Broadcast progress
+    // Broadcast progress immediately on line completion
     broadcastProgress(newCompletedLines);
 
     // Check completion
     if (newLineIndex >= lines.length) {
       finishRace();
     }
-  };
-
-  const broadcastProgress = (completedLines) => {
-    if (!socket) return;
-
-    const totalChars = completedLines.join('\n').length;
-    
-    socket.emit("update_progress", {
-      room_code: roomCode,
-      user_id: userId,
-      progress: totalChars,
-      wpm: calculateWPM(),
-      accuracy: calculateAccuracy()
-    });
   };
 
   const finishRace = () => {

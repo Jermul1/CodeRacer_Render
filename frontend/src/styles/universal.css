@@ -244,6 +244,7 @@
   flex-direction: column;
   gap: 0.5rem;
   width: 100%;
+  box-sizing: border-box; /* Add this line */
 }
 
 .input-label {
@@ -263,6 +264,7 @@
   outline: none;
   transition: border-color 0.2s;
   font-family: inherit;
+  box-sizing: border-box; /* Add this line */
 }
 
 .input-field:focus {
@@ -283,6 +285,12 @@
 .input-field-large {
   padding: 1rem;
   font-size: 1.2rem;
+}
+
+
+select.input-field option {
+  background: #1a1a2e;
+  color: #fff;
 }
 
 /* ==================== MESSAGES & ALERTS ==================== */

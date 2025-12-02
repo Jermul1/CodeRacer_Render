@@ -315,7 +315,7 @@ export default function MultiplayerPage({ userId, username, onBack }) {
                   const response = await createGame(userId, null, 4, lang);
                   setRoomCode(response.room_code);
                   setRaceResults(null);
-                  setView("lobby");
+                  setView("race"); 
                 } catch (e) {
                   setError(e.message || "Failed to start a new game");
                 }
