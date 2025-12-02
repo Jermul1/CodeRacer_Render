@@ -70,3 +70,13 @@ def finish_participant(
 ):
     """Mark participant as finished"""
     return game_service.finish_participant(payload)
+
+
+@router.post("/{room_code}/rematch", response_model=GameResponse)
+def rematch_game(
+    room_code: str,
+    user_id: int,
+    game_service: GameService = Depends(get_game_service)
+):
+    """Reset game for rematch with same players"""
+    return game_service.reset_game_for_rematch(room_code, user_id)

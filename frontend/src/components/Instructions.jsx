@@ -19,7 +19,7 @@ export default function Instructions() {
           <ol className="instructions-list">
             <li>Type the highlighted line fully without errors</li>
             <li>When line is complete, press Enter to go to next line in code</li>
-            <li>Complete race within time limit</li>
+            <li>Complete race within the time limit</li>
             <li>有志者事竟成 </li>
             <li>Type fast and with 100% accuracy</li>
           </ol>

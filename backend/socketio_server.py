@@ -38,13 +38,36 @@ async def connect(sid, environ):
 
 @sio.event
 async def disconnect(sid):
-    """Handle client disconnection"""
+    """Handle client disconnection and cleanup state"""
     print(f"Client disconnected: {sid}")
-    # Remove from active connections
+    # Remove from active connections and update game state
     for room_code in list(active_connections.keys()):
         if sid in active_connections[room_code]:
+            user_id = active_connections[room_code][sid]
             del active_connections[room_code][sid]
-            await sio.emit('player_left', {'sid': sid}, room=room_code)
+            # Use service to perform leave + host transfer if needed
+            db = SessionLocal()
+            try:
+                svc = GameService(db)
+                try:
+                    result = svc.leave_game(room_code, user_id)
+                except Exception as e:
+                    # If service fails, emit minimal event and continue
+                    await sio.emit('error', {'message': str(e)}, room=room_code)
+                    continue
+                if result.get('game_deleted'):
+                    await sio.emit('game_deleted', {
+                        'message': 'Game has been deleted'
+                    }, room=room_code)
+                else:
+                    await sio.emit('player_left', {
+                        'user_id': user_id,
+                        'participants': result.get('remaining_participants', []),
+                        'new_host_id': result.get('new_host_id'),
+                        'new_host_username': result.get('new_host_username')
+                    }, room=room_code)
+            finally:
+                db.close()
 
 
 @sio.event
@@ -92,13 +115,40 @@ async def join_room(sid, data):
 async def leave_room(sid, data):
     """Player leaves a game room"""
     room_code = data.get('room_code', '').upper()
+    user_id = data.get('user_id')
     
     await sio.leave_room(sid, room_code)
     
     if room_code in active_connections and sid in active_connections[room_code]:
+        user_id = active_connections[room_code][sid]
         del active_connections[room_code][sid]
     
-    await sio.emit('player_left', {'sid': sid}, room=room_code)
+    # Update game via service and broadcast detailed info
+    db = SessionLocal()
+    try:
+        if user_id is None:
+            # If user_id wasn't passed and not found, fall back to minimal event
+            await sio.emit('player_left', {'sid': sid}, room=room_code)
+            return
+        svc = GameService(db)
+        try:
+            result = svc.leave_game(room_code, user_id)
+        except Exception as e:
+            await sio.emit('error', {'message': str(e)}, room=room_code)
+            return
+        if result.get('game_deleted'):
+            await sio.emit('game_deleted', {
+                'message': 'Game has been deleted'
+            }, room=room_code)
+        else:
+            await sio.emit('player_left', {
+                'user_id': user_id,
+                'participants': result.get('remaining_participants', []),
+                'new_host_id': result.get('new_host_id'),
+                'new_host_username': result.get('new_host_username')
+            }, room=room_code)
+    finally:
+        db.close()
 
 
 @sio.event
@@ -222,9 +272,52 @@ async def finish_race(sid, data):
                 'username': p.username,
                 'wpm': float(p.wpm),
                 'accuracy': float(p.accuracy),
-                'position': p.finish_position
+                'position': p.finish_position,
+                'is_host': p.user_id == game.host_user_id
             } for p in ordered]
             await sio.emit('game_finished', {'results': results}, room=room_code)
+    finally:
+        db.close()
+
+
+@sio.event
+async def rematch_game(sid, data):
+    """Host requests a rematch"""
+    room_code = data.get('room_code', '').upper()
+    user_id = data.get('user_id')
+    
+    if not room_code or not user_id:
+        await sio.emit('error', {'message': 'Missing room_code or user_id'}, to=sid)
+        return
+    
+    db = SessionLocal()
+    try:
+        svc = GameService(db)
+        game = svc.game_repo.get_by_room_code(room_code)
+        
+        if not game:
+            await sio.emit('error', {'message': 'Game not found'}, to=sid)
+            return
+        
+        if game.host_user_id != user_id:
+            await sio.emit('error', {'message': 'Only host can start rematch'}, to=sid)
+            return
+        
+        if game.status != 'finished':
+            await sio.emit('error', {'message': 'Can only rematch finished games'}, to=sid)
+            return
+        
+        # Reset the game
+        result = svc.reset_game_for_rematch(room_code, user_id)
+        
+        # Notify all players in the room
+        await sio.emit('rematch_started', {
+            'room_code': room_code,
+            'message': 'Host started a rematch!'
+        }, room=room_code)
+        
+    except Exception as e:
+        await sio.emit('error', {'message': str(e)}, to=sid)
     finally:
         db.close()
 

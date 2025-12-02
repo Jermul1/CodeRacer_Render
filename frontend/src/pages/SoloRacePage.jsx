@@ -306,7 +306,7 @@ export default function SoloRacePage({ onBack }) {
                   className="progress-bar-fill" 
                   style={{ width: `${progressPercentage}%` }}
                 >
-                  {isFinished && <span className="finish-flag">🏁</span>}
+                  {isFinished && <span className="finish-flag">Finish</span>}
                 </div>
               </div>
             </div>

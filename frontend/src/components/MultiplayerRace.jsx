@@ -12,7 +12,7 @@ import "../styles/MultiplayerRace.css";
 
 const MAX_CONSECUTIVE_ERRORS = 7;
 const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-const COUNTDOWN_DURATION = 3;
+const COUNTDOWN_DURATION = 5;
 const RACE_DURATION_MS = 120000; // 1 minute 30 seconds
 
 export default function MultiplayerRace({ roomCode, userId, onFinish }) {
@@ -339,12 +339,14 @@ export default function MultiplayerRace({ roomCode, userId, onFinish }) {
     return <div className="race-loading">Loading race...</div>;
   }
 
-  if (countdown > 0) {
-    return <RaceCountdown countdown={countdown} />;
-  }
-
   return (
     <div className="race-container">
+      {countdown > 0 && (
+        <div className="countdown-overlay">
+          <div className="countdown-number">{countdown}</div>
+          <div className="countdown-text">Get Ready!</div>
+        </div>
+      )}
       <RaceHeader
         roomCode={roomCode}
         wpm={calculateWPM()}
@@ -379,12 +381,12 @@ export default function MultiplayerRace({ roomCode, userId, onFinish }) {
         lineNumber={currentLineIndex + 1}
         totalLines={lines.length}
         autoFocus={false}
-        disabled={!raceStarted || isFinished}
+        disabled={countdown > 0 || !raceStarted || isFinished}
       />
 
       {isFinished && (
         <div className="finish-message">
-          🎉 You finished! Waiting for other players...
+          You finished! Waiting for other players...
         </div>
       )}
     </div>

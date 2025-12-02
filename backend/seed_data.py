@@ -175,6 +175,24 @@ fetchUser(1).then(user => console.log(user));"""
     -
 ]"""
         ]
+        rr_lang = db.query(Language).filter(Language.name == "rickroll").first()
+        if not rr_lang:
+            rr_lang = Language(name="rickroll")
+            db.add(rr_lang)
+            db.commit()
+            db.refresh(rr_lang)
+            print("✅ Added Rickroll language")
+        else:
+            print("ℹ️  Rickroll language already exists")
+
+        rr_snippets = [
+            "We're no strangers to love\nYou know the rules and so do I\nA full commitment's what I'm thinking of\nYou wouldn't get this from any other guy",
+            "I just wanna tell you how I'm feeling\nGotta make you understand",
+            "Never gonna give you up\nNever gonna let you down\nNever gonna run around and desert you\nNever gonna make you cry\nNever gonna say goodbye\nNever gonna tell a lie and hurt you",
+            "We've known each other for so long\nYour heart's been aching, but you're too shy to say it\nInside, we both know what's been going on\nWe know the game and we're gonna play it",
+            "And if you ask me how I'm feeling\nDon't tell me you're too blind to see",
+            "Never gonna give you up\nNever gonna let you down\nNever gonna run around and desert you\nNever gonna make you cry\nNever gonna say goodbye\nNever gonna tell a lie and hurt you"
+        ]
 
         # ==========================================
         # INSERT SNIPPETS
@@ -201,23 +219,33 @@ fetchUser(1).then(user => console.log(user));"""
                 snippet = Snippet(language_id=bf_lang.id, code=code)
                 db.add(snippet)
                 bf_added += 1
+        rr_added = 0
+        for text in rr_snippets:
+            existing = db.query(Snippet).filter(Snippet.code == text).first()
+            if not existing:
+                snippet = Snippet(language_id=rr_lang.id, code=text)
+                db.add(snippet)
+                rr_added += 1
         
-        if python_added > 0 or js_added > 0 or bf_added > 0:
+        if python_added > 0 or js_added > 0 or bf_added > 0 or rr_added > 0:
             db.commit()
             print(f"✅ Added {python_added} Python snippets")
             print(f"✅ Added {js_added} JavaScript snippets")
             print(f"✅ Added {bf_added} Brainfuck snippets")
+            print(f"✅ Added {rr_added} Rickroll snippets")
         else:
             print("ℹ️  All snippets already exist")
 
         python_total = db.query(Snippet).filter(Snippet.language_id == python_lang.id).count()
         js_total = db.query(Snippet).filter(Snippet.language_id == js_lang.id).count()
         bf_total = db.query(Snippet).filter(Snippet.language_id == bf_lang.id).count()
+        rr_total = db.query(Snippet).filter(Snippet.language_id == rr_lang.id).count()
 
         print(f"\n📊 Summary:")
         print(f"   Python snippets: {python_total}")
         print(f"   JavaScript snippets: {js_total}")
         print(f"   Brainfuck snippets: {bf_total}")
+        print(f"   Rickroll snippets: {rr_total}")
         
     except Exception as e:
         print(f"❌ Error seeding database: {e}")

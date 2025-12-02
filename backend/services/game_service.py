@@ -293,3 +293,103 @@ class GameService:
             "message": "Participant marked as finished",
             "finish_position": participant.finish_position
         }
+
+    def leave_game(self, room_code: str, user_id: int) -> dict:
+        """
+        Remove a participant from a game and handle host transfer or game cleanup.
+
+        Returns a dict that may include:
+        - remaining_participants: List[ParticipantResponse]
+        - new_host_id/new_host_username: If host changed
+        - game_deleted: True if the game was deleted because no participants remain
+        """
+        # Find game
+        game = self.game_repo.get_by_room_code(room_code)
+        if not game:
+            raise HTTPException(status_code=404, detail="Game not found")
+
+        # Allow leaving from any game status (waiting, in_progress, or finished)
+
+        # Remove participant
+        removed = self.participant_repo.delete_by_game_and_user(game.id, user_id)
+        if not removed:
+            raise HTTPException(status_code=404, detail="Not in this game")
+
+        # Load remaining participants
+        remaining = self.participant_repo.get_by_game(game.id)
+
+        # If no one remains, delete the game
+        if not remaining:
+            self.game_repo.delete(game.id)
+            return {"message": "Game deleted - no players remaining", "game_deleted": True}
+
+        response: dict = {"message": "Left game successfully"}
+
+        # If host left, transfer host to first remaining participant deterministically
+        if game.host_user_id == user_id:
+            new_host = remaining[0]
+            game.host_user_id = new_host.user_id
+            self.game_repo.update(game)
+            response["new_host_id"] = new_host.user_id
+            response["new_host_username"] = new_host.username
+
+        # Include remaining participants snapshot
+        response["remaining_participants"] = [
+            ParticipantResponse.model_validate(p) for p in remaining
+        ]
+
+        return response
+    
+    def reset_game_for_rematch(self, room_code: str, host_user_id: int) -> GameResponse:
+        """
+        Reset a finished game for a rematch with same players
+        
+        Args:
+            room_code: Game room code
+            host_user_id: User ID of the host (for verification)
+            
+        Returns:
+            Updated game details
+            
+        Raises:
+            HTTPException: If validation fails
+        """
+        game = self.game_repo.get_by_room_code(room_code)
+        if not game:
+            raise HTTPException(status_code=404, detail="Game not found")
+        
+        if game.host_user_id != host_user_id:
+            raise HTTPException(status_code=403, detail="Only host can reset game")
+        
+        if game.status != "finished":
+            raise HTTPException(status_code=400, detail="Can only reset finished games")
+        
+        # Get a new random snippet (same language if available)
+        current_snippet = self.snippet_repo.get_by_id(game.snippet_id)
+        language = current_snippet.language.name if current_snippet and current_snippet.language else None
+        
+        if language:
+            new_snippet = self.snippet_repo.get_random_by_language(language)
+        else:
+            new_snippet = self.snippet_repo.get_random()
+        
+        if not new_snippet:
+            raise HTTPException(status_code=404, detail="No snippets available")
+        
+        # Reset game state
+        game.snippet_id = new_snippet.id
+        game.status = "waiting"
+        game.started_at = None
+        self.game_repo.update(game)
+        
+        # Reset all participants
+        participants = self.participant_repo.get_by_game(game.id)
+        for participant in participants:
+            participant.progress = 0
+            participant.wpm = 0
+            participant.accuracy = 0
+            participant.is_finished = False
+            participant.finish_position = None
+            self.participant_repo.update(participant)
+        
+        return GameResponse.model_validate(game)

@@ -6,6 +6,22 @@
   background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
   color: #fff;
   padding: 2rem;
+  position: relative;
+}
+
+.countdown-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 12, 41, 0.3); /* light tint so underlying UI remains visible */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  pointer-events: none; /* allow clicks to flow through; input is programmatically disabled anyway */
 }
 
 .countdown-screen {
@@ -22,6 +38,7 @@
   font-weight: bold;
   color: #00e0c6;
   animation: pulse 1s ease-in-out;
+  text-shadow: 0 0 20px rgba(0, 224, 198, 0.5);
 }
 
 .countdown-text {
@@ -40,7 +57,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* keep controls on one line */
   gap: 1rem;
 }
 
@@ -48,17 +65,33 @@
   font-size: 1.5rem;
   font-weight: bold;
   color: #00e0c6;
+  flex: 1; /* push controls to the right */
 }
 
 .race-stats {
   display: flex;
   gap: 2rem;
+  align-items: center;
+  width: 360px;        /* fixed width to prevent growth */
+  min-width: 360px;    /* ensure consistent layout */
+  justify-content: space-between;
 }
+
+/* Language selection styled to sit alongside stats */
+.race-language-select {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: 1rem; /* visual spacing before stats */
+}
+
+/* Remove previous absolute positioning rules to keep elements inline */
 
 .stat {
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex: 1 0 0; /* distribute evenly within fixed container */
 }
 
 .stat-label {

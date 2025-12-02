@@ -1,9 +1,10 @@
 // pages/MultiplayerPage.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createGame, joinGame, signup, getAvailableLanguages } from "../api";
 import GameLobby from "../components/GameLobby";
 import { getGame } from "../api";
 import MultiplayerRace from "../components/MultiplayerRace";
+import { io } from "socket.io-client";
 import "../styles/MultiplayerRace.css";
 
 export default function MultiplayerPage({ userId, username, onBack }) {
@@ -28,6 +29,34 @@ export default function MultiplayerPage({ userId, username, onBack }) {
 
   const effectiveUserId = userId || guestUserId;
   const effectiveUsername = username || guestName || "Guest";
+
+  // Listen for rematch events when in results view
+  useEffect(() => {
+    if (view !== "results" || !roomCode) return;
+
+    const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+    const socket = io(SOCKET_URL, {
+      path: "/socket.io",
+      transports: ["websocket", "polling"]
+    });
+
+    socket.on("connect", () => {
+      socket.emit("join_room", { room_code: roomCode, user_id: effectiveUserId });
+    });
+
+    socket.on("rematch_started", (data) => {
+      console.log("Rematch started, going to lobby:", data);
+      setRaceResults(null);
+      setView("lobby");
+    });
+
+    return () => {
+      if (socket) {
+        socket.emit("leave_room", { room_code: roomCode });
+        socket.disconnect();
+      }
+    };
+  }, [view, roomCode, effectiveUserId]);
 
   // Fetch languages once when menu is shown first time
   if (view === 'menu' && languages.length === 0 && !languagesLoading) {
@@ -192,7 +221,7 @@ export default function MultiplayerPage({ userId, username, onBack }) {
                 disabled={loading || !userId}
                 className="btn btn-primary btn-full btn-large"
               >
-                {loading ? 'Creating...' : '🎮 Create Game'}
+                {loading ? 'Creating...' : 'Create Game'}
               </button>
             </div>
 
@@ -232,7 +261,7 @@ export default function MultiplayerPage({ userId, username, onBack }) {
                 }
                 className="btn btn-blue btn-full btn-large"
               >
-                {loading || creatingGuest ? 'Joining...' : '🚀 Join Game'}
+                {loading || creatingGuest ? 'Joining...' : 'Join Game'}
               </button>
             </div>
 
@@ -241,7 +270,7 @@ export default function MultiplayerPage({ userId, username, onBack }) {
               onClick={onBack}
               className="btn btn-outline-secondary mt-xl"
             >
-              ← Back to Home
+              Back to Home
             </button>
         </div>
       </div>
@@ -275,10 +304,13 @@ export default function MultiplayerPage({ userId, username, onBack }) {
 
   // -------- Results View --------
   if (view === "results" && raceResults) {
+    // Check if current user is host
+    const isCurrentUserHost = raceResults.some(r => r.user_id === effectiveUserId && r.is_host);
+    
     return (
       <div className="race-container">
         <div className="centered-content">
-          <h1 className="page-title">🏆 Race Results</h1>
+          <h1 className="page-title">Race Results</h1>
           <div className="card">
             {raceResults.map((result, idx) => (
               <div
@@ -286,13 +318,7 @@ export default function MultiplayerPage({ userId, username, onBack }) {
                 className={idx === 0 ? "result-item result-winner" : "result-item"}
               >
                 <span className="result-position">
-                  {idx === 0
-                    ? '🥇'
-                    : idx === 1
-                    ? '🥈'
-                    : idx === 2
-                    ? '🥉'
-                    : `${result.position}.`}{" "}
+                  {`${result.position}.`} {" "}
                   {result.username}
                 </span>
                 <span className="result-stats">
@@ -304,36 +330,21 @@ export default function MultiplayerPage({ userId, username, onBack }) {
           <div className="text-center mt-md">
             <button
               type="button"
-              className="btn btn-primary btn-large"
-              disabled={!userId}
-              onClick={async () => {
-                try {
-                  // Use previous game's language for rematch
-                  const details = await getGame(roomCode);
-                  const stored = (() => { try { return localStorage.getItem('preferredLanguage'); } catch { return null; } })();
-                  const lang = details?.snippet_language || stored || selectedLanguage || null;
-                  const response = await createGame(userId, null, 4, lang);
-                  setRoomCode(response.room_code);
-                  setRaceResults(null);
-                  setView("race"); 
-                } catch (e) {
-                  setError(e.message || "Failed to start a new game");
-                }
+              className="btn btn-secondary btn-large"
+              onClick={() => {
+                setRaceResults(null);
+                setView("lobby");
               }}
+              style={{ marginRight: '1rem' }}
             >
-              🔁 Play Again
+              Back to Lobby
             </button>
-            {!userId && (
-              <div className="text-muted mt-sm text-small">Login required to create a new game</div>
-            )}
-          </div>
-          <div className="text-center mt-xl">
             <button
               type="button"
+              className="btn btn-outline-secondary btn-large"
               onClick={handleBackToMenu}
-              className="btn btn-primary btn-large"
             >
-              Back to Multiplayer Menu
+              Back to Homepage
             </button>
           </div>
         </div>

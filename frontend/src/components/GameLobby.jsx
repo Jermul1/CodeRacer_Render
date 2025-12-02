@@ -53,8 +53,22 @@ export default function GameLobby({ roomCode, userId, onStartRace, onBack }) {
 
     newSocket.on("player_left", (data) => {
       console.log("Player left:", data);
-      // Refresh game data
-      fetchGameData();
+      // Update participants directly if provided
+      if (data && Array.isArray(data.participants)) {
+        setParticipants(data.participants);
+      } else {
+        // Fallback: refresh game data
+        fetchGameData();
+      }
+      // Handle host transfer
+      if (data && data.new_host_id) {
+        setGameData((prev) => prev ? { ...prev, host_user_id: data.new_host_id } : prev);
+        setIsHost(data.new_host_id === userId);
+        if (data.new_host_username) {
+          setError(`${data.new_host_username} is now the host`);
+          setTimeout(() => setError(""), 3000);
+        }
+      }
     });
 
     newSocket.on("game_started", (data) => {
@@ -62,6 +76,23 @@ export default function GameLobby({ roomCode, userId, onStartRace, onBack }) {
       if (onStartRace) {
         onStartRace(roomCode);
       }
+    });
+
+    newSocket.on("rematch_started", (data) => {
+      console.log("Rematch started:", data);
+      // Refresh game data to get new snippet
+      fetchGameData();
+    });
+
+    newSocket.on("game_deleted", (data) => {
+      console.log("Game deleted:", data);
+      // Navigate back to previous page or home
+      if (onBack) {
+        onBack();
+      }
+      // Clear local lobby state
+      setParticipants([]);
+      setGameData(null);
     });
 
     newSocket.on("error", (data) => {
@@ -72,7 +103,7 @@ export default function GameLobby({ roomCode, userId, onStartRace, onBack }) {
 
     return () => {
       if (newSocket) {
-        newSocket.emit("leave_room", { room_code: roomCode });
+        newSocket.emit("leave_room", { room_code: roomCode, user_id: userId });
         newSocket.disconnect();
       }
     };
@@ -82,7 +113,12 @@ export default function GameLobby({ roomCode, userId, onStartRace, onBack }) {
     try {
       // Emit socket event to start game (backend will broadcast to all players)
       if (socket) {
-        socket.emit("start_game", { room_code: roomCode, user_id: userId });
+        // Check if this is a rematch (game status is finished)
+        if (gameData && gameData.status === "finished") {
+          socket.emit("rematch_game", { room_code: roomCode, user_id: userId });
+        } else {
+          socket.emit("start_game", { room_code: roomCode, user_id: userId });
+        }
       }
     } catch (err) {
       setError(err.response?.data?.detail || "Failed to start game");

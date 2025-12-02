@@ -115,3 +115,12 @@ export const deleteGame = async (roomCode, userId) => {
     throw new Error(normalizeApiError(error, "Delete game failed"));
   }
 };
+
+export const rematchGame = async (roomCode, userId) => {
+  try {
+    const res = await axios.post(`${API_URL}/games/${roomCode}/rematch?user_id=${userId}`);
+    return res.data;
+  } catch (error) {
+    throw new Error(normalizeApiError(error, "Failed to start rematch"));
+  }
+};
