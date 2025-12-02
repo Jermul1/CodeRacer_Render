@@ -168,7 +168,8 @@ export default function MultiplayerRace({ roomCode, userId, onFinish }) {
     const totalChars = completedLines.join('\n').length + userInput.length;
     if (totalChars === 0) return 100;
     
-    return Math.round(((totalChars - errors) / totalChars) * 100);
+    const accuracy = ((totalChars - errors) / totalChars) * 100;
+    return Math.max(0, Math.round(accuracy)); // Ensure it never goes below 0
   };
 
   // ==================== PROGRESS BROADCASTING ====================
