@@ -330,17 +330,6 @@ export default function MultiplayerPage({ userId, username, onBack }) {
           <div className="text-center mt-md">
             <button
               type="button"
-              className="btn btn-secondary btn-large"
-              onClick={() => {
-                setRaceResults(null);
-                setView("lobby");
-              }}
-              style={{ marginRight: '1rem' }}
-            >
-              Back to Lobby
-            </button>
-            <button
-              type="button"
               className="btn btn-outline-secondary btn-large"
               onClick={handleBackToMenu}
             >
