@@ -152,4 +152,6 @@ DATABASE_URL=postgresql://user:password@localhost/coderacer_db
 ## Tekoälyn käyttö
 
 - On käytetty GitHub Copilottia koodin muokkaamisessa/luonnissa ja uusien tiedostojen luonnissa
-- Koko projekti Vibe Koodattu :D Varmasti huomaat
+- Koko projekti Vibe Koodattu :D Varmasti huomaat eli oleta, että jokaisessa tiedostossa on suurella todennäköisyydellä käytetty tekoälyä.
+- ChatGPT:ltä olen kysynyt ideoita ja hankkinut tietoa. Mitä kirjastoja kannattaa käyttää esim. Salasanan turvallisen tallentamiseen tai muuhun samanlaiseen käyttöön.
+- Miksi käytetty paljon tekoälyä. Uskon, että ei aika olisi riittänyt muuten...:)
