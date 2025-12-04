@@ -1,236 +1,155 @@
-# CodeRacer Setup Instructions
+# CodeRacer - Competitive Code Racing Game
 
-## Backend Setup
+CodeRacer is a multiplayer web-based coding challenge platform where users race to complete code snippets accurately and quickly. The application supports both solo and multiplayer modes with real-time interactions.
 
-### Prerequisites
-- Python 3.8 or higher
-- pip (Python package installer)
-- PostgreSQL 14 or higher
+## Render
+Jos ei lataa snippettejä. Mene backendin linkkiin ja kato onko päällä. Käytössä renderin ilmaisversio. Sivustojen pitäisi olla voimassa koko ajan, mutta backendin toimintaa saatetaan hidastaa, jos se ei ole käytössä.
 
-### Database Setup
+https://coderacer-frontend.onrender.com 
 
-1. Install PostgreSQL from [official website](https://www.postgresql.org/download/)
+https://coderacer-backend-fs4h.onrender.com/docs
 
-2. Create a new PostgreSQL database:
-```bash
-psql -U postgres
-CREATE DATABASE your_database_name;
-```
 
-### Environment Setup
 
-1. Create a `.env` file in the project root:
-```bash
-# On Windows
-copy .env.example .env
-```
-
-2. Update the `.env` file with your PostgreSQL credentials:
-```
-DATABASE_URL=postgresql://postgres:your_password@localhost:5432/your_database_name
-```
-
-### Initial Setup
-
-1. Create a virtual environment:
-```bash
-python -m venv venv
-```
-
-2. Activate the virtual environment:
-```bash
-# On Windows
-venv\Scripts\activate
-```
-
-3. Navigate to the backend directory:
-```bash
-cd backend
-```
-
-4. Install required dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-5. Initialize the database and seed initial data:
-```bash
-python seed_data.py
-```
-
-### Running the Backend Server
-
-1. Start the FastAPI server:
-```bash
-uvicorn main:app --reload
-# IF having trouble with imports try
-
-cd ..
-python -m uvicorn backend.main:app --reload
-```
-
-The backend server will be running at `http://localhost:8000`
-
-### API Documentation
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
-
-### Available Endpoints
-- Auth: `/auth/signup`, `/auth/login`
-- Code Snippets: `/snippets/{language}`, `/snippets`
-
-### Development Notes
-- The server will automatically reload when you make changes to the code
-- Make sure PostgreSQL service is running
-- Keep requirements.txt updated when adding new dependencies
-- Never commit `.env` file with sensitive data
-- Use `.env.example` as a template for required environment variables
-
-## Frontend Setup
+## Quick Start Setup
 
 ### Prerequisites
-- Node.js 18 or higher
-- npm (comes with Node.js)
+- **Python** 3.10+ (installed)
+- **PostgreSQL** (installed and running)
+- **Node.js** 18+ (installed)
 
-### Installation
+### Backend Setup
 
-1. **Install Node.js**
-   - Download from [official website](https://nodejs.org/)
-   - Verify installation:
-   ```powershell
-   node --version
-   npm --version
+Kokeilin helpottaa backendin launchaamista. Pitäs lähteä käyntiin riippuvuuksien asentamisella ja backendin päälle laittamisella. 1, 2, ja 5. Pitäs luoda automaattisesti tietokannan, jos sitä ei ole ja laittaa sinne dataa. 
+
+1. Create and activate a virtual environment in project root:
+   ```bash
+   python -m venv venv
+   # On Windows:
+   venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
    ```
 
-2. **Navigate to frontend directory**:
-```powershell
-cd frontend
-```
-
-3. **Install dependencies**:
-```powershell
-npm install
-```
-
-### Running the Frontend
-
-1. **Start the development server**:
-```powershell
-npm run dev
-```
-
-The frontend will be running at `http://localhost:5173`
-
-2. **Build for production**:
-```powershell
-npm run build
-```
-
-3. **Preview production build**:
-```powershell
-npm run preview
-```
-
-### Development Notes
-- Hot reload is enabled - changes will reflect automatically
-- Make sure backend is running before testing API calls
-- Built with React 19, Vite, and TailwindCSS
-- Monaco Editor is used for code editing features
-
----
-
-## Docker Setup (Recommended)
-
-Docker provides an easier way to run the entire application with all dependencies.
-
-### Prerequisites
-
-1. **Install Docker Desktop for Windows**
-   - Download from [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-   - Install and restart your computer if prompted
-   - Verify installation:
-   ```powershell
-   docker --version
-   docker compose version
+3. Install dependencies:
+   ```bash
+   pip install -r backend/requirements.txt
    ```
 
-### Docker Configuration
+4. Configure environment variables by creating a `.env` file in the backend directory with database credentials
 
-1. **Update `.env` file** in project root:
-```env
-DATABASE_URL=postgresql://postgres:postgres@postgres:5432/coderacer
+5. Run the backend server:
+   ```bash
+   # Importit hassuja ei välttämättä toimi jos olet backend kansiossa ja käytät uvicorn main:app--reload
+
+   ucicorn backend.main:app --reload
+   ```
+
+6. Add code snippets to database
+   ```bash
+   python backend/seed_data.py
+   ```  
+
+### Frontend Setup
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+   The frontend will be available at `http://localhost:5173`
+
+## Tech Stack
+
+### Backend
+- **Framework**: FastAPI - Modern, fast Python web framework with async support
+- **Database**: PostgreSQL - Robust relational database with SQLAlchemy ORM
+- **Authentication**: Passlib (Argon2) - Secure password hashing and authentication
+- **Real-time Communication**: Socket.IO - WebSocket-based event-driven architecture
+- **Data Validation**: Pydantic - Runtime type checking and settings validation
+- **Caching**: Redis - In-memory data store for session management and caching
+- **Server**: Uvicorn - ASGI server for running async Python applications
+- **Email**: Email-validator - RFC-compliant email validation (En oo varma onko käytössä)
+
+**Architecture**: Modular layered architecture with separation of concerns:
+- `routes/` - HTTP endpoint handlers
+- `services/` - Business logic layer
+- `repositories/` - Data access layer
+- `schemas/` - Pydantic models for validation
+- `core/` - Configuration and security utilities
+
+### Frontend
+- **Framework**: React 19 - Modern UI library with hooks and concurrent features
+- **Build Tool**: Vite - Lightning-fast build tool and dev server
+- **Routing**: React Router v7 - Client-side navigation and routing
+- **Styling**: styles/ Ai generoitu .css tiedostot
+- **HTTP Client**: Axios - Promise-based HTTP client
+- **Real-time**: Socket.IO Client - WebSocket client for real-time game events
+- **Accessibility**: Axe-core & Jest-axe - Automated accessibility testing
+- **Testing**: Vitest - Lightning-fast unit test framework (Kokeiltu vähän en saanu toimimaan)
+
+**Architecture**: Component-based with feature pages:
+- `components/` - Reusable UI components
+- `pages/` - Page-level components (Home, Solo, Multiplayer)
+- `styles/` - CSS modules for component styling
+- `api.js` - Centralized HTTP request utilities
+
+## Project Structure
+
 ```
-Note: Use `postgres` as hostname (Docker service name), not `localhost`
-
-2. **Create required Docker files** (already included):
-   - `Dockerfile.backend` - Backend container configuration
-   - `Dockerfile.frontend` - Frontend container configuration  
-   - `docker-compose.yml` - Multi-container orchestration
-   - `.dockerignore` - Files to exclude from containers
-
-### Running with Docker
-
-1. **Build and start all services**:
-```powershell
-docker compose up --build
+Render/
+├── backend/          # Python FastAPI backend server
+│   ├── routes/       # API endpoints
+│   ├── services/     # Business logic
+│   ├── repositories/ # Database access
+│   ├── schemas/      # Pydantic validators
+│   ├── core/         # Config and security
+│   └── tests/        # Unit tests
+├── frontend/         # React + Vite frontend application
+│   └── src/
+│       ├── components/   # Reusable components
+│       ├── pages/        # Page components
+│       └── styles/       # CSS files
+└── README.md         # This file
 ```
 
-2. **Run in background (detached mode)**:
-```powershell
-docker compose up -d --build
+## Key Features
+
+- **Solo Racing**: Complete code challenges at your own pace
+- **Multiplayer Racing**: Real-time racing against other users
+- **Code Snippets**: Diverse code challenges in multiple programming languages
+- **Real-time Synchronization**: Socket.IO for instant multiplayer updates
+
+
+
+## Environment Configuration
+
+Create `.env` files in both backend and frontend directories for environment-specific settings:
+
+**Backend `.env` example:**
+```
+DATABASE_URL=postgresql://user:password@localhost/coderacer_db
 ```
 
-3. **View logs**:
-```powershell
-docker compose logs -f
 
-# Or for specific service
-docker compose logs backend -f
-docker compose logs frontend -f
-```
 
-4. **Stop services**:
-```powershell
-docker compose down
-```
+## Additional Resources
 
-5. **Stop and remove volumes** (clears database):
-```powershell
-docker compose down -v
-```
+- API Documentation: Available at `http://localhost:8000/docs` when backend is running
+- Architecture Documentation: See `backend/ARCHITECTURE.md`
+- Multiplayer Setup: See `MULTIPLAYER_SETUP.md`
 
-### Access Your Application with Docker
+## Tekoälyn käyttö
 
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
-- **PostgreSQL**: localhost:5432
-
-### Seed Database (Docker)
-
-After containers are running:
-```powershell
-docker compose exec backend python -m backend.seed_data
-```
-
-### Docker Troubleshooting
-
-**Backend keeps restarting?**
-- Check logs: `docker compose logs backend`
-- Ensure `.env` uses `postgres` hostname, not `localhost`
-- Allow Docker through Windows Firewall when prompted
-
-**Port already in use?**
-```powershell
-netstat -ano | findstr :8000
-netstat -ano | findstr :5173
-```
-
-**Reset everything**:
-```powershell
-docker compose down -v
-docker compose up --build
-```
-
----
-
+- On käytetty GitHub Copilottia koodin muokkaamisessa/luonnissa ja uusien tiedostojen luonnissa
+- Koko projekti Vibe Koodattu :D Varmasti huomaat

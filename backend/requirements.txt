@@ -4,10 +4,8 @@ sqlalchemy
 pydantic
 pydantic-settings
 email-validator
-python-multipart
 psycopg2-binary
 passlib[argon2]
 python-dotenv
 python-socketio
-aiofiles
 redis

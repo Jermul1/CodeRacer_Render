@@ -8,23 +8,16 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-     "test": "vitest",
-     "test:coverage": "vitest run --coverage"
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@monaco-editor/react": "^4.7.0",
     "@tailwindcss/vite": "^4.1.16",
     "axios": "^1.13.1",
-    "axe-core": "^4.9.0",
-    "jest-axe": "^9.0.0",
-    "editor": "^1.0.0",
-    "monaco": "^1.201704190613.0",
-    "monaco-editor": "^0.54.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.6",
-    "socket.io-client": "^4.7.2",
-    "tailwind": "^2.3.1"
+    "socket.io-client": "^4.7.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
